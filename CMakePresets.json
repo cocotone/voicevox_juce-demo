@@ -1,0 +1,174 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/builds/${presetName}",
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": {
+                    "type": "BOOL",
+                    "value": true
+                },
+                "CMAKE_POSITION_INDEPENDENT_CODE": {
+                    "type": "BOOL",
+                    "value": true
+                }
+            }
+        },
+        {
+            "name": "vs2022",
+            "displayName": "Windows-only configuration",
+            "description": "This build is only available on Windows",
+            "inherits": [
+                "base"
+            ],
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64"
+        },
+        {
+            "name": "xcode",
+            "displayName": "Xcode",
+            "description": "Default build using Xcode generator",
+            "inherits": [
+                "base"
+            ],
+            "generator": "Xcode"
+        },
+        {
+            "name": "xcode-ios",
+            "displayName": "Xcode iOS",
+            "description": "Default build using Xcode generator",
+            "inherits": [
+                "base"
+            ],
+            "generator": "Xcode",
+            "cacheVariables": {
+                "CMAKE_SYSTEM_NAME": {
+                    "type": "STRING",
+                    "value": "iOS"
+                }
+            }
+        },
+        {
+            "name": "ninja-multi",
+            "displayName": "Ninja Multi-Config",
+            "description": "Default build using Ninja Multi-Config generator",
+            "inherits": [
+                "base"
+            ]
+        },
+        {
+            "name": "ninja-single-debug",
+            "displayName": "Ninja",
+            "description": "Debug config using Ninja generator",
+            "inherits": [
+                "base"
+            ],
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": {
+                    "type": "STRING",
+                    "value": "Debug"
+                }
+            }
+        },
+        {
+            "name": "ninja-single-release",
+            "displayName": "Ninja",
+            "description": "Release config using Ninja generator",
+            "inherits": [
+                "base"
+            ],
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": {
+                    "type": "STRING",
+                    "value": "Release"
+                }
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "targets":[
+            ]
+        },
+        {
+            "name": "vs2022-debug",
+            "description": "Build using Visual Studio 17 2022 for Debug",
+            "configurePreset": "vs2022",
+            "configuration": "Debug",
+            "inherits": "base"
+        },
+        {
+            "name": "vs2022-release",
+            "description": "Build using Visual Studio 17 2022 for Release",
+            "configurePreset": "vs2022",
+            "configuration": "Release",
+            "inherits": "base"
+        },
+        {
+            "name": "xcode-debug",
+            "description": "Build using Xcode for Debug",
+            "configurePreset": "xcode",
+            "configuration": "Debug",
+            "inherits": "base"
+        },
+        {
+            "name": "xcode-release",
+            "description": "Build using Xcode for Release",
+            "configurePreset": "xcode",
+            "configuration": "Release",
+            "inherits": "base"
+        },
+        {
+            "name": "xcode-ios-debug",
+            "description": "Build using Xcode iOS for Debug",
+            "configurePreset": "xcode-ios",
+            "configuration": "Debug",
+            "inherits": "base"
+        },
+        {
+            "name": "xcode-ios-release",
+            "description": "Build using Xcode iOS for Release",
+            "configurePreset": "xcode-ios",
+            "configuration": "Release",
+            "inherits": "base"
+        },
+        {
+            "name": "ninja-multi-debug",
+            "description": "Build using Ninja for Debug",
+            "configurePreset": "ninja-multi",
+            "configuration": "Debug",
+            "inherits": "base"
+        },
+        {
+            "name": "ninja-multi-release",
+            "description": "Build using Ninja for Release",
+            "configurePreset": "ninja-multi",
+            "configuration": "Release",
+            "inherits": "base"
+        },
+        {
+            "name": "ninja-single-debug",
+            "description": "Build using Ninja for Debug",
+            "configurePreset": "ninja-single-debug",
+            "inherits": "base"
+        },
+        {
+            "name": "ninja-single-release",
+            "description": "Build using Ninja for Release",
+            "configurePreset": "ninja-single-release",
+            "inherits": "base"
+        }
+    ]
+}
