@@ -47,10 +47,17 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_compile_options(/utf-8)
 endif()
 
-# Refer to: https://stackoverflow.com/questions/57915564/cmake-how-to-set-rpath-to-origin-with-cmake
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH "$\{ORIGIN\}")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    # Refer to: https://cmake.org/cmake/help/latest/prop_tgt/MACOSX_RPATH.html
+    set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH "@loader_path")
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    # Refer to: https://stackoverflow.com/questions/57915564/cmake-how-to-set-rpath-to-origin-with-cmake
+    set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH "$\{ORIGIN\}")
+endif()
 
 # We 'require' that we need juce. If JUCE isn't found, it will revert to what's in
 # CMake/Findjuce.cmake, where you can see how JUCE is brought in/configured
