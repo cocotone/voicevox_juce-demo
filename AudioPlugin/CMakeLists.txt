@@ -81,11 +81,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     )
 endif()
 
-# Post build command process for Standalone...
+# Pre link and post build command process for Standalone...
 if(TARGET ${PLUGIN_NAME}_Standalone)
     add_custom_command(
         TARGET ${PLUGIN_NAME}_Standalone
-        POST_BUILD
+        PRE_LINK
         COMMAND
             ${CMAKE_COMMAND} -E
             copy $<TARGET_FILE:voicevox::voicevox_core> $<TARGET_FILE_DIR:${PLUGIN_NAME}_Standalone>
@@ -93,19 +93,21 @@ if(TARGET ${PLUGIN_NAME}_Standalone)
 
     add_custom_command(
         TARGET ${PLUGIN_NAME}_Standalone
-        POST_BUILD
+        PRE_LINK
         COMMAND
             ${CMAKE_COMMAND} -E
             copy $<TARGET_FILE:voicevox::onnxruntime> $<TARGET_FILE_DIR:${PLUGIN_NAME}_Standalone>
     )
 
-    add_custom_command(
-        TARGET ${PLUGIN_NAME}_Standalone
-        POST_BUILD
-        COMMAND
-            ${CMAKE_COMMAND} -E
-            copy $<TARGET_FILE:voicevox::onnxruntime_providers_shared> $<TARGET_FILE_DIR:${PLUGIN_NAME}_Standalone>
-    )
+    if(TARGET voicevox::onnxruntime_providers_shared)
+        add_custom_command(
+            TARGET ${PLUGIN_NAME}_Standalone
+            PRE_LINK
+            COMMAND
+                ${CMAKE_COMMAND} -E
+                copy $<TARGET_FILE:voicevox::onnxruntime_providers_shared> $<TARGET_FILE_DIR:${PLUGIN_NAME}_Standalone>
+        )
+    endif()
 
     # Copy resource directory to build directory.
     add_custom_command(
@@ -125,11 +127,11 @@ if(TARGET ${PLUGIN_NAME}_Standalone)
     )
 endif()
 
-# Post build command process for VST3...
+# Pre link and post build command process for VST3...
 if(TARGET ${PLUGIN_NAME}_VST3)
     add_custom_command(
         TARGET ${PLUGIN_NAME}_VST3
-        POST_BUILD
+        PRE_LINK
         COMMAND
             ${CMAKE_COMMAND} -E
             copy $<TARGET_FILE:voicevox::voicevox_core> $<TARGET_FILE_DIR:${PLUGIN_NAME}_VST3>
@@ -137,19 +139,21 @@ if(TARGET ${PLUGIN_NAME}_VST3)
 
     add_custom_command(
         TARGET ${PLUGIN_NAME}_VST3
-        POST_BUILD
+        PRE_LINK
         COMMAND
             ${CMAKE_COMMAND} -E
             copy $<TARGET_FILE:voicevox::onnxruntime> $<TARGET_FILE_DIR:${PLUGIN_NAME}_VST3>
     )
 
-    add_custom_command(
-        TARGET ${PLUGIN_NAME}_VST3
-        POST_BUILD
-        COMMAND
-            ${CMAKE_COMMAND} -E
-            copy $<TARGET_FILE:voicevox::onnxruntime_providers_shared> $<TARGET_FILE_DIR:${PLUGIN_NAME}_VST3>
-    )
+    if(TARGET voicevox::onnxruntime_providers_shared)
+        add_custom_command(
+            TARGET ${PLUGIN_NAME}_VST3
+            PRE_LINK
+            COMMAND
+                ${CMAKE_COMMAND} -E
+                copy $<TARGET_FILE:voicevox::onnxruntime_providers_shared> $<TARGET_FILE_DIR:${PLUGIN_NAME}_VST3>
+        )
+    endif()
 
     # Copy resource directory to build directory.
     add_custom_command(
