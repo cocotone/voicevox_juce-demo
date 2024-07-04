@@ -26,6 +26,7 @@ private:
     juce::Value valueSpeakerId;
 
     std::unique_ptr<juce::TextEditor> textEditor;
+    std::unique_ptr<juce::TextButton> buttonInvokeSynthesis;
     std::unique_ptr<juce::TextButton> buttonInvokeTTS;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)

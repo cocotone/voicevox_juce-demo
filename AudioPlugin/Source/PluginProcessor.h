@@ -49,6 +49,7 @@ public:
     void loadAudioFileStream(std::unique_ptr<juce::InputStream> audioFileStream);
 
     //==============================================================================
+    void requestSynthesis(int64_t speakerId, const juce::String& text);
     void requestTextToSpeech(int64_t speakerId, const juce::String& text);
     juce::String getMetaJsonStringify();
 

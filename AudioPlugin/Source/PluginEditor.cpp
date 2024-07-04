@@ -179,12 +179,28 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     textEditor = std::make_unique<juce::TextEditor>();
     textEditor->setMultiLine(true);
-    textEditor->setFont(textEditor->getFont().withPointHeight(24));
+    textEditor->setFont(textEditor->getFont().withPointHeight(12));
     addAndMakeVisible(textEditor.get());
+
+    buttonInvokeSynthesis = std::make_unique<juce::TextButton>();
+    buttonInvokeSynthesis->setButtonText(
+        juce::CharPointer_UTF8 ("\xe3\x81\x86\xe3\x81\x9f\xe3\x81\x86\xe3\x82\x88")
+    );
+    buttonInvokeSynthesis->onClick = [safe_this = juce::Component::SafePointer(this)] {
+        if(safe_this.getComponent() == nullptr)
+        {
+            return;
+        }
+
+        const auto speaker_id = (int)safe_this->valueSpeakerId.getValue();
+        const auto text = safe_this->textEditor->getText();
+        safe_this->processorRef.requestSynthesis(speaker_id, text);
+        };
+    addAndMakeVisible(buttonInvokeSynthesis.get());
 
     buttonInvokeTTS = std::make_unique<juce::TextButton>();
     buttonInvokeTTS->setButtonText(
-        juce::CharPointer_UTF8("\xef\xbc\x81\xef\xbc\x81\xe3\x81\x97\xe3\x82\x83\xe3\x81\xb9\xe3\x82\x8b\xe3\x82\x88\xef\xbc\x81\xef\xbc\x81")
+        juce::CharPointer_UTF8 ("\xe3\x81\x97\xe3\x82\x83\xe3\x81\xb9\xe3\x82\x8b\xe3\x82\x88")
     );
     buttonInvokeTTS->onClick = [safe_this = juce::Component::SafePointer(this)] {
         if(safe_this.getComponent() == nullptr)
@@ -198,7 +214,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         };
     addAndMakeVisible(buttonInvokeTTS.get());
 
-    setSize (640, 480);
+    setSize (640, 640);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -225,6 +241,7 @@ void AudioPluginAudioProcessorEditor::resized()
         jsonTreeView->setBounds(left_pane.reduced(8));
 
         buttonInvokeTTS->setBounds(right_pane.removeFromBottom(80).reduced(8));
+        //buttonInvokeSynthesis->setBounds(right_pane.removeFromBottom(80).reduced(8));
         speakerIdEditor->setBounds(right_pane.removeFromBottom(80).reduced(8));
         textEditor->setBounds(right_pane.reduced(8));
     }

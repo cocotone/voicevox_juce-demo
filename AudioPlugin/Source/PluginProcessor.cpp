@@ -246,6 +246,25 @@ void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputS
     }
 }
 
+void AudioPluginAudioProcessor::requestSynthesis(int64_t speakerId, const juce::String& audio_query_json)
+{
+    const auto result = voicevoxClient->loadModel(speakerId);
+    if (result.failed())
+    {
+        juce::Logger::outputDebugString(result.getErrorMessage());
+    }
+
+    juce::var json_parsed = juce::JSON::parse(audio_query_json);
+    const auto audio_query_json_conv = juce::JSON::toString(json_parsed, true);
+
+    auto memory_wav = voicevoxClient->synthesis(speakerId, audio_query_json_conv);
+
+    if (memory_wav.has_value())
+    {
+        loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(memory_wav.value(), true));
+    }
+}
+
 void AudioPluginAudioProcessor::requestTextToSpeech(int64_t speakerId, const juce::String& text)
 {
     const auto result = voicevoxClient->loadModel(speakerId);
