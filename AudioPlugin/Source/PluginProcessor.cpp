@@ -238,7 +238,8 @@ void AudioPluginAudioProcessor::loadAudioFile(const juce::File& fileToLoad)
         audioBufferForThumbnail.setSize(2, reader->lengthInSamples);
         reader->read(&audioBufferForThumbnail, 0, reader->lengthInSamples, 0, true, true);
 
-        audioThumbnail->setSource(&audioBufferForThumbnail, reader->sampleRate, 0);
+        juce::Uuid uuid;
+        audioThumbnail->setSource(&audioBufferForThumbnail, reader->sampleRate, uuid.hash());
 
         // Update can play or not.
         if (audioTransportSource->getTotalLength() > 0)
@@ -277,7 +278,8 @@ void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputS
         audioBufferForThumbnail.setSize(2, reader->lengthInSamples);
         reader->read(&audioBufferForThumbnail, 0, reader->lengthInSamples, 0, true, true);
 
-        audioThumbnail->setSource(&audioBufferForThumbnail, reader->sampleRate, 0);
+        juce::Uuid uuid;
+        audioThumbnail->setSource(&audioBufferForThumbnail, reader->sampleRate, uuid.hash());
 
         // Update can play or not.
         if (audioTransportSource->getTotalLength() > 0)
