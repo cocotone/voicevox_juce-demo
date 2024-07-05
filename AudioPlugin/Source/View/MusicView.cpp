@@ -38,6 +38,7 @@ void MusicView::paint(juce::Graphics& g)
 
 void MusicView::resized()
 {
+    repaint();
 }
 
 //==============================================================================
@@ -48,7 +49,7 @@ void MusicView::mouseDown(const juce::MouseEvent& e)
 
 void MusicView::mouseDrag(const juce::MouseEvent& e)
 {
-    transportSourceRef.setPosition(juce::jmax(0.0, xToTime((float)e.x)));
+    transportSourceRef.setPosition(juce::jmax(0.0, xToTime((double)e.x, transportSourceRef.getLengthInSeconds())));
 }
 
 void MusicView::mouseUp(const juce::MouseEvent&)
@@ -81,9 +82,9 @@ float MusicView::timeToX(const double pointTime, const double totalTime) const
     return (float)getWidth() * (float)pointTime / (float)totalTime;
 }
 
-double MusicView::xToTime(const float x) const
+double MusicView::xToTime(const double x, const double totalTime) const
 {
-    return (x / (float)getWidth());
+    return (x / (double)getWidth()) * totalTime;
 }
 
 bool MusicView::canMoveTransport() const noexcept
@@ -98,7 +99,10 @@ void MusicView::updateCursorPosition()
     {
         currentPositionMarker.setVisible(true);
 
-        const auto rect_marker = juce::Rectangle<float>(timeToX(transportSourceRef.getCurrentPosition(), audioThumbnailRef.getTotalLength()) - 0.75f, 0, 1.5f, (float)(getHeight()));
+        const auto cursor_x = timeToX(transportSourceRef.getCurrentPosition(), transportSourceRef.getLengthInSeconds());
+        const auto cursor_width = 1.5f;
+        const auto cursor_height = getHeight();
+        const auto rect_marker = juce::Rectangle<float>(cursor_x - cursor_width / 2.0f, 0.0f, cursor_width, cursor_height);
         currentPositionMarker.setRectangle(rect_marker);
     }
     else

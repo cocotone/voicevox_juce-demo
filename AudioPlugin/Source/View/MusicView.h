@@ -36,7 +36,7 @@ private:
 
     //==============================================================================
     float timeToX(const double pointTime, const double totalTime) const;
-    double xToTime(const float x) const;
+    double xToTime(const double x, const double totalTime) const;
     bool canMoveTransport() const noexcept;
     void updateCursorPosition();
 
