@@ -214,7 +214,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         };
     addAndMakeVisible(buttonInvokeTTS.get());
 
-    setSize (640, 640);
+    musicView = std::make_unique<MusicView>(processorRef.getAudioTransportSource(), processorRef.getAudioThumbnail());
+    addAndMakeVisible(musicView.get());
+
+    playerController = std::make_unique<PlayerController>(processorRef.getApplicationState());
+    addAndMakeVisible(playerController.get());
+
+    setSize (800, 640);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -234,6 +240,7 @@ void AudioPluginAudioProcessorEditor::resized()
     auto rect_area = getLocalBounds();
 
     {
+        auto bottom_pane = rect_area.removeFromBottom(200);
         auto left_pane = rect_area.removeFromLeft(320);
         auto right_pane = rect_area;
 
@@ -244,6 +251,9 @@ void AudioPluginAudioProcessorEditor::resized()
         //buttonInvokeSynthesis->setBounds(right_pane.removeFromBottom(80).reduced(8));
         speakerIdEditor->setBounds(right_pane.removeFromBottom(80).reduced(8));
         textEditor->setBounds(right_pane.reduced(8));
+
+        playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
+        musicView->setBounds(bottom_pane.reduced(8));
     }
 
 }

@@ -12,6 +12,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                      #endif
                        )
 {
+    // Application state related.
+    applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
+    applicationState.setProperty("Player_IsPlaying", juce::var(false), nullptr);
+    applicationState.setProperty("Player_IsLooping", juce::var(false), nullptr);
+
+    applicationState.addListener(this);
+
     // Audio file player related.
     audioFormatManager = std::make_unique<juce::AudioFormatManager>();
     audioFormatManager->registerBasicFormats();
@@ -21,11 +28,18 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     audioTransportSource = std::make_unique<juce::AudioTransportSource>();
 
+    audioThumbnail = std::make_unique<juce::AudioThumbnail>(512, *audioFormatManager.get(), audioThumbnailCache);
+   
     voicevoxClient = std::make_unique<voicevox::VoicevoxClient>();
+
+    audioTransportSource->addChangeListener(this);
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
+    audioTransportSource->removeChangeListener(this);
+
+    applicationState.removeListener(this);
 }
 
 //==============================================================================
@@ -218,19 +232,33 @@ void AudioPluginAudioProcessor::loadAudioFile(const juce::File& fileToLoad)
             reader->sampleRate,
             2);
 
-        audioTransportSource->start();
+        // Update audio thumbnail
+        audioBufferForThumbnail.setSize(2, reader->lengthInSamples);
+        reader->read(&audioBufferForThumbnail, 0, reader->lengthInSamples, 0, true, true);
+
+        audioThumbnail->setSource(&audioBufferForThumbnail, reader->sampleRate, 0);
+
+        // Update can play or not.
+        if (audioTransportSource->getTotalLength() > 0)
+        {
+            applicationState.setProperty("Player_CanPlay", juce::var(true), nullptr);
+        }
+        else
+        {
+            applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
+        }
     }
 }
 
 void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputStream> audioFileStream)
 {
     // Unload the previous file source and delete it..
+    audioThumbnail->clear();
     audioTransportSource->stop();
     audioTransportSource->setSource(nullptr);
     audioFormatReaderSource.reset();
 
-    juce::AudioFormatReader* reader = 
-        audioFormatManager->createReaderFor(std::move(audioFileStream));
+    juce::AudioFormatReader* reader = audioFormatManager->createReaderFor(std::move(audioFileStream));
 
     if (reader != nullptr)
     {
@@ -242,10 +270,25 @@ void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputS
             reader->sampleRate,
             2);
 
-        audioTransportSource->start();
+        // Update audio thumbnail
+        audioBufferForThumbnail.setSize(2, reader->lengthInSamples);
+        reader->read(&audioBufferForThumbnail, 0, reader->lengthInSamples, 0, true, true);
+
+        audioThumbnail->setSource(&audioBufferForThumbnail, reader->sampleRate, 0);
+
+        // Update can play or not.
+        if (audioTransportSource->getTotalLength() > 0)
+        {
+            applicationState.setProperty("Player_CanPlay", juce::var(true), nullptr);
+        }
+        else
+        {
+            applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
+        }
     }
 }
 
+//==============================================================================
 void AudioPluginAudioProcessor::requestSynthesis(int64_t speakerId, const juce::String& audio_query_json)
 {
     const auto result = voicevoxClient->loadModel(speakerId);
@@ -284,6 +327,49 @@ void AudioPluginAudioProcessor::requestTextToSpeech(int64_t speakerId, const juc
 juce::String AudioPluginAudioProcessor::getMetaJsonStringify()
 {
     return juce::JSON::toString(voicevoxClient->getMetasJson());
+}
+
+//==============================================================================
+void AudioPluginAudioProcessor::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    if (source == audioTransportSource.get())
+    {
+        // End operation.
+        if (audioTransportSource->getTotalLength() > 0 && audioTransportSource->hasStreamFinished())
+        {
+            audioTransportSource->setNextReadPosition(0);
+
+            // Loop operation.
+            if (applicationState.getProperty("Player_IsLooping"))
+            {
+                audioTransportSource->start();
+            }
+        }
+
+        // Update playing or not.
+        applicationState.setProperty("Player_IsPlaying", audioTransportSource->isPlaying(), nullptr);
+    }
+}
+
+//==============================================================================
+void AudioPluginAudioProcessor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId)
+{
+    if (treeWhosePropertyHasChanged == applicationState)
+    {
+        if (propertyId.toString() == "Player_IsPlaying")
+        {
+            // Scoped listener detachment.
+            const bool should_play = (bool)applicationState.getProperty(propertyId);
+            if (should_play)
+            {
+                audioTransportSource->start();
+            }
+            else
+            {
+                audioTransportSource->stop();
+            }
+        }
+    }
 }
 
 //==============================================================================

@@ -5,7 +5,10 @@
 #include <voicevox_juce/voicevox_juce.h>
 
 //==============================================================================
-class AudioPluginAudioProcessor final : public juce::AudioProcessor
+class AudioPluginAudioProcessor final
+    : public juce::AudioProcessor
+    , private juce::ValueTree::Listener
+    , private juce::ChangeListener
 {
 public:
     //==============================================================================
@@ -53,7 +56,20 @@ public:
     void requestTextToSpeech(int64_t speakerId, const juce::String& text);
     juce::String getMetaJsonStringify();
 
+    //==============================================================================
+    juce::AudioFormatManager& getAudioFormatManager() const { return *audioFormatManager.get(); }
+    juce::AudioTransportSource& getAudioTransportSource() const { return *audioTransportSource.get(); }
+    juce::AudioThumbnail& getAudioThumbnail() const { return *audioThumbnail.get(); }
+    juce::ValueTree& getApplicationState() { return applicationState; }
+
 private:
+    //==============================================================================
+    // juce::ChangeListener
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+
+    // juce::ValueTree::Listener
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId) override;
+
     //==============================================================================
     // Audio
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
@@ -61,7 +77,14 @@ private:
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     std::unique_ptr<juce::AudioTransportSource> audioTransportSource;
 
+    juce::AudioThumbnailCache audioThumbnailCache{ 5 };
+    std::unique_ptr<juce::AudioThumbnail> audioThumbnail;
+    juce::AudioBuffer<float> audioBufferForThumbnail;
+
     std::unique_ptr<voicevox::VoicevoxClient> voicevoxClient;
+
+    // State
+    juce::ValueTree applicationState{ "ApplicationState", {} };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

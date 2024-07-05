@@ -2,6 +2,9 @@
 
 #include "PluginProcessor.h"
 
+#include "View/MusicView.h"
+#include "View/PlayerController.h"
+
 //==============================================================================
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
 {
@@ -28,6 +31,9 @@ private:
     std::unique_ptr<juce::TextEditor> textEditor;
     std::unique_ptr<juce::TextButton> buttonInvokeSynthesis;
     std::unique_ptr<juce::TextButton> buttonInvokeTTS;
+
+    std::unique_ptr<MusicView> musicView;
+    std::unique_ptr<PlayerController> playerController;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
