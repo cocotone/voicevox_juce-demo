@@ -216,6 +216,7 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
 void AudioPluginAudioProcessor::loadAudioFile(const juce::File& fileToLoad)
 {
     // Unload the previous file source and delete it..
+    audioThumbnail->clear();
     audioTransportSource->stop();
     audioTransportSource->setSource(nullptr);
     audioFormatReaderSource.reset();
@@ -233,6 +234,7 @@ void AudioPluginAudioProcessor::loadAudioFile(const juce::File& fileToLoad)
             2);
 
         // Update audio thumbnail
+        audioBufferForThumbnail.clear();
         audioBufferForThumbnail.setSize(2, reader->lengthInSamples);
         reader->read(&audioBufferForThumbnail, 0, reader->lengthInSamples, 0, true, true);
 
@@ -271,6 +273,7 @@ void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputS
             2);
 
         // Update audio thumbnail
+        audioBufferForThumbnail.clear();
         audioBufferForThumbnail.setSize(2, reader->lengthInSamples);
         reader->read(&audioBufferForThumbnail, 0, reader->lengthInSamples, 0, true, true);
 
