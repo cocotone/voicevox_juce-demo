@@ -2,7 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
-#include <voicevox_juce/voicevox_juce.h>
+#include "VoicevoxEngine/VoicevoxEngine.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final
@@ -52,8 +52,8 @@ public:
     void loadAudioFileStream(std::unique_ptr<juce::InputStream> audioFileStream);
 
     //==============================================================================
-    void requestSynthesis(int64_t speakerId, const juce::String& text);
-    void requestTextToSpeech(int64_t speakerId, const juce::String& text);
+    void requestSynthesis(juce::int64 speakerId, const juce::String& text);
+    void requestTextToSpeech(juce::int64 speakerId, const juce::String& text);
     juce::String getMetaJsonStringify();
 
     //==============================================================================
@@ -81,7 +81,7 @@ private:
     std::unique_ptr<juce::AudioThumbnail> audioThumbnail;
     juce::AudioBuffer<float> audioBufferForThumbnail;
 
-    std::unique_ptr<voicevox::VoicevoxClient> voicevoxClient;
+    std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
 
     // State
     juce::ValueTree applicationState{ "ApplicationState", {} };

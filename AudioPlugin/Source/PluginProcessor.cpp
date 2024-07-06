@@ -30,13 +30,15 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     audioThumbnail = std::make_unique<juce::AudioThumbnail>(512, *audioFormatManager.get(), audioThumbnailCache);
    
-    voicevoxClient = std::make_unique<voicevox::VoicevoxClient>();
+    voicevoxEngine = std::make_unique<cctn::VoicevoxEngine>();
 
     audioTransportSource->addChangeListener(this);
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
+    voicevoxEngine->shutdown();
+
     audioTransportSource->removeChangeListener(this);
 
     applicationState.removeListener(this);
@@ -116,14 +118,12 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
     audioTransportSource->prepareToPlay(samplesPerBlock, sampleRate);
 
-    voicevoxClient->connect();
+    voicevoxEngine->start();
 }
 
 void AudioPluginAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
-    voicevoxClient->disconnect();
+    voicevoxEngine->stop();
 }
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -294,44 +294,49 @@ void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputS
 }
 
 //==============================================================================
-void AudioPluginAudioProcessor::requestSynthesis(int64_t speakerId, const juce::String& audio_query_json)
+void AudioPluginAudioProcessor::requestSynthesis(juce::int64 speakerId, const juce::String& audio_query_json)
 {
-    const auto result = voicevoxClient->loadModel(speakerId);
-    if (result.failed())
-    {
-        juce::Logger::outputDebugString(result.getErrorMessage());
-    }
+    //const auto result = voicevoxClient->loadModel(speakerId);
+    //if (result.failed())
+    //{
+    //    juce::Logger::outputDebugString(result.getErrorMessage());
+    //}
 
-    juce::var json_parsed = juce::JSON::parse(audio_query_json);
-    const auto audio_query_json_conv = juce::JSON::toString(json_parsed, true);
+    //juce::var json_parsed = juce::JSON::parse(audio_query_json);
+    //const auto audio_query_json_conv = juce::JSON::toString(json_parsed, true);
 
-    auto memory_wav = voicevoxClient->synthesis(speakerId, audio_query_json_conv);
+    //auto memory_wav = voicevoxClient->synthesis(speakerId, audio_query_json_conv);
 
-    if (memory_wav.has_value())
-    {
-        loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(memory_wav.value(), true));
-    }
+    //if (memory_wav.has_value())
+    //{
+    //    loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(memory_wav.value(), true));
+    //}
 }
 
-void AudioPluginAudioProcessor::requestTextToSpeech(int64_t speakerId, const juce::String& text)
+void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const juce::String& text)
 {
-    const auto result = voicevoxClient->loadModel(speakerId);
-    if (result.failed())
-    {
-        juce::Logger::outputDebugString(result.getErrorMessage());
-    }
+    cctn::VoicevoxEngineRequest request;
+    request.requestId = juce::Uuid();
+    request.speakerId = speakerId;
+    request.text = text;
 
-    auto memory_wav = voicevoxClient->tts(speakerId, text);
+    voicevoxEngine->requestTextToSpeechAsync(request,
+        [this](const cctn::VoicevoxEngineArtefact& artefact) {
+            juce::Logger::outputDebugString(artefact.requestId.toString());
 
-    if (memory_wav.has_value())
-    {
-        loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(memory_wav.value(), true));
-    }
+            if (artefact.wavBinary.has_value())
+            {
+                juce::MessageManager::callAsync(
+                    [this, wav_binary = artefact.wavBinary.value()] {
+                        this->loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(wav_binary, true));
+                    });
+            }
+        });
 }
 
 juce::String AudioPluginAudioProcessor::getMetaJsonStringify()
 {
-    return juce::JSON::toString(voicevoxClient->getMetasJson());
+    return voicevoxEngine->getMetaJsonStringify();
 }
 
 //==============================================================================
