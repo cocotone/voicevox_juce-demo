@@ -58,7 +58,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     textEditor = std::make_unique<juce::TextEditor>();
     textEditor->setMultiLine(true);
-    textEditor->setFont(textEditor->getFont().withPointHeight(12));
+    textEditor->setFont(textEditor->getFont().withPointHeight(20));
     addAndMakeVisible(textEditor.get());
 
     buttonInvokeSynthesis = std::make_unique<juce::TextButton>();
