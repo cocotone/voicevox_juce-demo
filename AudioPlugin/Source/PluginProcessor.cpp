@@ -195,6 +195,15 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         // ..do something to the data...
     }
 
+    for (const juce::MidiMessageMetadata metadata : midiMessages)
+    {
+        const auto message = metadata.getMessage();
+        if (message.isNoteOn() && message.getNoteNumber() == 64)
+        {
+            audioTransportSource->start();
+        }
+    }
+
     juce::AudioSourceChannelInfo buffer_info(buffer);
     audioTransportSource->getNextAudioBlock(buffer_info);
 }
