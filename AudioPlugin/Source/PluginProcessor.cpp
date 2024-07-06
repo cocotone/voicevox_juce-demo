@@ -11,6 +11,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
                        )
+    , editorState("editor_sate")
 {
     // Application state related.
     applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
@@ -18,6 +19,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     applicationState.setProperty("Player_IsLooping", juce::var(false), nullptr);
 
     applicationState.addListener(this);
+
+    editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
 
     // Audio file player related.
     audioFormatManager = std::make_unique<juce::AudioFormatManager>();
@@ -315,6 +318,8 @@ void AudioPluginAudioProcessor::requestSynthesis(juce::int64 speakerId, const ju
 
 void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const juce::String& text)
 {
+    editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(true), nullptr);
+
     cctn::VoicevoxEngineRequest request;
     request.requestId = juce::Uuid();
     request.speakerId = speakerId;
@@ -329,6 +334,8 @@ void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const
                 juce::MessageManager::callAsync(
                     [this, wav_binary = artefact.wavBinary.value()] {
                         this->loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(wav_binary, true));
+
+                        editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
                     });
             }
         });

@@ -9,16 +9,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     juce::ignoreUnused (processorRef);
 
 #if JUCE_WINDOWS
-  juce::String typeFaceName = "Meiryo UI";
-  juce::Desktop::getInstance().getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(typeFaceName);
+    juce::String typeFaceName = "Meiryo UI";
+    juce::Desktop::getInstance().getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(typeFaceName);
 #elif JUCE_MAC
-  juce::String typeFaceName = "Arial Unicode MS";
-  juce::Desktop::getInstance().getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(typeFaceName);
+    juce::String typeFaceName = "Arial Unicode MS";
+    juce::Desktop::getInstance().getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(typeFaceName);
 // #elif JUCE_LINUX
 //   juce::String typeFaceName = "IPAGothic";
 //   juce::Desktop::getInstance().getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(typeFaceName);
 #endif
-
 
     jsonTreeView = std::make_unique<juce::TreeView>();
     jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
@@ -99,11 +98,24 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     playerController = std::make_unique<PlayerController>(processorRef.getApplicationState());
     addAndMakeVisible(playerController.get());
 
+    progressPanel = std::make_unique<ProgressPanel>();
+    addChildComponent(progressPanel.get());
+
+    processorRef.getEditorState().addListener(this);
+
+    valueIsVoicevoxEngineTaskRunning.referTo(processorRef.getEditorState(), "VoicevoxEngine_IsTaskRunning", nullptr);
+    valueIsVoicevoxEngineTaskRunning.forceUpdateOfCachedValue();
+
+    // Initial update
+    updateView();
+
     setSize (800, 640);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    processorRef.getEditorState().removeListener(this);
+
     jsonTreeView->setRootItem(nullptr);
     jsonTreeViewItemRoot.reset(nullptr);
 }
@@ -122,6 +134,7 @@ void AudioPluginAudioProcessorEditor::resized()
         auto bottom_pane = rect_area.removeFromBottom(200);
         auto left_pane = rect_area.removeFromLeft(320);
         auto right_pane = rect_area;
+        auto progress_area = right_pane;
 
         buttonUpdateVoicevoxMetas->setBounds(left_pane.removeFromBottom(80).reduced(8));
         jsonTreeView->setBounds(left_pane.reduced(8));
@@ -133,6 +146,33 @@ void AudioPluginAudioProcessorEditor::resized()
 
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));
+
+        progressPanel->setBounds(progress_area);
+    }
+    repaint();
+}
+
+void AudioPluginAudioProcessorEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId)
+{
+    bool should_update_view = false;
+
+    if (treeWhosePropertyHasChanged == processorRef.getEditorState())
+    {
+        if (propertyId == valueIsVoicevoxEngineTaskRunning.getPropertyID())
+        {
+            valueIsVoicevoxEngineTaskRunning.forceUpdateOfCachedValue();
+            should_update_view = true;
+        }
     }
 
+    if (should_update_view)
+    {
+        updateView();
+        repaint();
+    }
+}
+
+void AudioPluginAudioProcessorEditor::updateView()
+{
+    progressPanel->setVisible(valueIsVoicevoxEngineTaskRunning);
 }

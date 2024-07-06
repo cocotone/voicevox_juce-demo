@@ -61,6 +61,7 @@ public:
     juce::AudioTransportSource& getAudioTransportSource() const { return *audioTransportSource.get(); }
     juce::AudioThumbnail& getAudioThumbnail() const { return *audioThumbnail.get(); }
     juce::ValueTree& getApplicationState() { return applicationState; }
+    juce::ValueTree& getEditorState() { return editorState; }
 
 private:
     //==============================================================================
@@ -85,6 +86,7 @@ private:
 
     // State
     juce::ValueTree applicationState{ "ApplicationState", {} };
+    juce::ValueTree editorState;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

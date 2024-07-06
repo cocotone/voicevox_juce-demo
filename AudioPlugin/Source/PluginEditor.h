@@ -4,9 +4,12 @@
 
 #include "View/MusicView.h"
 #include "View/PlayerController.h"
+#include "View/ProgressPanel.h"
 
 //==============================================================================
-class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
+class AudioPluginAudioProcessorEditor final
+    : public juce::AudioProcessorEditor
+    , private juce::ValueTree::Listener
 {
 public:
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
@@ -17,8 +20,13 @@ public:
     void resized() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    //==============================================================================
+    virtual void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property);
+
+    //==============================================================================
+    void updateView();
+
+    //==============================================================================
     AudioPluginAudioProcessor& processorRef;
 
     std::unique_ptr<juce::TreeView> jsonTreeView;
@@ -34,6 +42,9 @@ private:
 
     std::unique_ptr<MusicView> musicView;
     std::unique_ptr<PlayerController> playerController;
+
+    std::unique_ptr<ProgressPanel> progressPanel;
+    juce::CachedValue<bool> valueIsVoicevoxEngineTaskRunning;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
