@@ -21,7 +21,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     applicationState.addListener(this);
 
     editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
-    editorState.setProperty("VoicevoxEngine_SelectedSpeakerIdentifier", juce::var(0), nullptr);
+    editorState.setProperty("VoicevoxEngine_SelectedSpeakerIdentifier", juce::var(""), nullptr);
     editorState.setProperty("VoicevoxEngine_HasSpeakerListUpdated", juce::var(false), nullptr);
 
     voicevoxMapSpeakerIdentifierToSpeakerId.clear();
@@ -198,7 +198,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (const juce::MidiMessageMetadata metadata : midiMessages)
     {
         const auto message = metadata.getMessage();
-        if (message.isNoteOn() && message.getNoteNumber() == 64)
+        if (message.isNoteOn() && message.getNoteNumber() == 60)
         {
             audioTransportSource->start();
         }

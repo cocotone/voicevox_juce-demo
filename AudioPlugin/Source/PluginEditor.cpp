@@ -209,7 +209,9 @@ void AudioPluginAudioProcessorEditor::updateView(bool isInitial)
     if (isInitial)
     {
         auto speaker_list = processorRef.getVoicevoxSpeakerList();
+        const auto last_combo_text = processorRef.getEditorState().getProperty("VoicevoxEngine_SelectedSpeakerIdentifier").toString();
         comboboxSpeakerChoice->clear(juce::dontSendNotification);
         comboboxSpeakerChoice->addItemList(speaker_list, 1);
+        comboboxSpeakerChoice->setText(last_combo_text);
     }
 }
