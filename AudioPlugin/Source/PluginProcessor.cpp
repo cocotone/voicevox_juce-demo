@@ -21,6 +21,11 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     applicationState.addListener(this);
 
     editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
+    editorState.setProperty("VoicevoxEngine_SelectedSpeakerIdentifier", juce::var(0), nullptr);
+    editorState.setProperty("VoicevoxEngine_HasSpeakerListUpdated", juce::var(false), nullptr);
+
+    voicevoxMapSpeakerIdentifierToSpeakerId.clear();
+    voicevoxSpeakerIdentifierList.clear();
 
     // Audio file player related.
     audioFormatManager = std::make_unique<juce::AudioFormatManager>();
@@ -122,11 +127,17 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     audioTransportSource->prepareToPlay(samplesPerBlock, sampleRate);
 
     voicevoxEngine->start();
+    voicevoxMapSpeakerIdentifierToSpeakerId = voicevoxEngine->getSpeakerIdentifierToSpeakerIdMap();
+    voicevoxSpeakerIdentifierList = voicevoxEngine->getSpeakerIdentifierList();
+
+    editorState.setProperty("VoicevoxEngine_HasSpeakerIdUpdated", juce::var(true), nullptr);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
 {
     voicevoxEngine->stop();
+    voicevoxSpeakerIdentifierList.clear();
+    voicevoxMapSpeakerIdentifierToSpeakerId.clear();
 }
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -296,6 +307,17 @@ void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputS
     }
 }
 
+void AudioPluginAudioProcessor::clearAudioFileHandle()
+{
+    // Unload the previous file source and delete it..
+    audioThumbnail->clear();
+    audioTransportSource->stop();
+    audioTransportSource->setSource(nullptr);
+    audioFormatReaderSource.reset();
+
+    applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
+}
+
 //==============================================================================
 void AudioPluginAudioProcessor::requestSynthesis(juce::int64 speakerId, const juce::String& audio_query_json)
 {
@@ -318,11 +340,9 @@ void AudioPluginAudioProcessor::requestSynthesis(juce::int64 speakerId, const ju
 
 void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const juce::String& text)
 {
-    editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(true), nullptr);
-
     cctn::VoicevoxEngineRequest request;
     request.requestId = juce::Uuid();
-    request.speakerId = speakerId;
+    request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedSpeakerIdentifier").toString()];
     request.text = text;
 
     voicevoxEngine->requestTextToSpeechAsync(request,
@@ -338,12 +358,23 @@ void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const
                         editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
                     });
             }
+            else
+            {
+                juce::MessageManager::callAsync(
+                    [this] {
+                        this->clearAudioFileHandle();
+
+                        editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
+                    });
+            }
         });
+
+    editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(true), nullptr);
 }
 
 juce::String AudioPluginAudioProcessor::getMetaJsonStringify()
 {
-    return voicevoxEngine->getMetaJsonStringify();
+    return juce::JSON::toString(voicevoxEngine->getMetaJson());
 }
 
 //==============================================================================

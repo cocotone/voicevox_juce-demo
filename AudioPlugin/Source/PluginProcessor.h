@@ -50,6 +50,7 @@ public:
     //==============================================================================
     void loadAudioFile(const juce::File& fileToLoad);
     void loadAudioFileStream(std::unique_ptr<juce::InputStream> audioFileStream);
+    void clearAudioFileHandle();
 
     //==============================================================================
     void requestSynthesis(juce::int64 speakerId, const juce::String& text);
@@ -62,6 +63,10 @@ public:
     juce::AudioThumbnail& getAudioThumbnail() const { return *audioThumbnail.get(); }
     juce::ValueTree& getApplicationState() { return applicationState; }
     juce::ValueTree& getEditorState() { return editorState; }
+
+    //==============================================================================
+    const juce::StringArray& getVoicevoxSpeakerList() const { return voicevoxSpeakerIdentifierList; };
+    const std::map<juce::String, juce::int64>& getVoicevoxSpeakerMap() const { return voicevoxMapSpeakerIdentifierToSpeakerId; };
 
 private:
     //==============================================================================
@@ -87,6 +92,9 @@ private:
     // State
     juce::ValueTree applicationState{ "ApplicationState", {} };
     juce::ValueTree editorState;
+
+    std::map<juce::String, juce::int64> voicevoxMapSpeakerIdentifierToSpeakerId;
+    juce::StringArray voicevoxSpeakerIdentifierList;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

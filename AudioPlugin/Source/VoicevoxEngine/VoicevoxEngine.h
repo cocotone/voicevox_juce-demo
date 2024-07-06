@@ -59,7 +59,9 @@ public:
     void stop();
 
     //==============================================================================
-    juce::String getMetaJsonStringify();
+    juce::var getMetaJson();
+    std::map<juce::String, juce::int64> getSpeakerIdentifierToSpeakerIdMap();
+    juce::StringArray getSpeakerIdentifierList();
     VoicevoxEngineArtefact requestTextToSpeech(const VoicevoxEngineRequest& request);
     void requestTextToSpeechAsync(const VoicevoxEngineRequest& request, std::function<void(const VoicevoxEngineArtefact&)> callback);
 

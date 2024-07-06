@@ -55,6 +55,19 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     speakerIdEditor = std::make_unique<juce::TextPropertyComponent>(valueSpeakerId, "Speaker ID", 4, false, true);
     addAndMakeVisible(speakerIdEditor.get());
 
+    comboboxSpeakerChoice = std::make_unique<juce::ComboBox>();
+    comboboxSpeakerChoice->onChange =
+        [safe_this = juce::Component::SafePointer(this)] {
+        if (safe_this.getComponent() == nullptr)
+        {
+            return;
+        }
+
+        const auto selected_speaker_identifier = safe_this->comboboxSpeakerChoice->getItemText(safe_this->comboboxSpeakerChoice->getSelectedItemIndex());
+        safe_this->processorRef.getEditorState().setProperty("VoicevoxEngine_SelectedSpeakerIdentifier", selected_speaker_identifier, nullptr);
+        };
+    addAndMakeVisible(comboboxSpeakerChoice.get());
+
     textEditor = std::make_unique<juce::TextEditor>();
     textEditor->setMultiLine(true);
     textEditor->setFont(textEditor->getFont().withPointHeight(20));
@@ -106,8 +119,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     valueIsVoicevoxEngineTaskRunning.referTo(processorRef.getEditorState(), "VoicevoxEngine_IsTaskRunning", nullptr);
     valueIsVoicevoxEngineTaskRunning.forceUpdateOfCachedValue();
 
+    valueIsVoicevoxEngineHasSpeakerListUpdated.referTo(processorRef.getEditorState(), "VoicevoxEngine_HasSpeakerListUpdated", nullptr);
+    valueIsVoicevoxEngineHasSpeakerListUpdated.forceUpdateOfCachedValue();
+
     // Initial update
-    updateView();
+    updateView(true);
 
     setSize (800, 640);
 }
@@ -132,16 +148,16 @@ void AudioPluginAudioProcessorEditor::resized()
 
     {
         auto bottom_pane = rect_area.removeFromBottom(200);
-        auto left_pane = rect_area.removeFromLeft(320);
+        //auto left_pane = rect_area.removeFromLeft(320);
         auto right_pane = rect_area;
         auto progress_area = right_pane;
 
-        buttonUpdateVoicevoxMetas->setBounds(left_pane.removeFromBottom(80).reduced(8));
-        jsonTreeView->setBounds(left_pane.reduced(8));
+        //buttonUpdateVoicevoxMetas->setBounds(left_pane.removeFromBottom(80).reduced(8));
+        //jsonTreeView->setBounds(left_pane.reduced(8));
 
         buttonInvokeTTS->setBounds(right_pane.removeFromBottom(80).reduced(8));
         //buttonInvokeSynthesis->setBounds(right_pane.removeFromBottom(80).reduced(8));
-        speakerIdEditor->setBounds(right_pane.removeFromBottom(80).reduced(8));
+        comboboxSpeakerChoice->setBounds(right_pane.removeFromBottom(80).reduced(8));
         textEditor->setBounds(right_pane.reduced(8));
 
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
@@ -163,16 +179,37 @@ void AudioPluginAudioProcessorEditor::valueTreePropertyChanged(juce::ValueTree& 
             valueIsVoicevoxEngineTaskRunning.forceUpdateOfCachedValue();
             should_update_view = true;
         }
+
+        if (propertyId == valueIsVoicevoxEngineHasSpeakerListUpdated.getPropertyID())
+        {
+            valueIsVoicevoxEngineHasSpeakerListUpdated.forceUpdateOfCachedValue();
+            valueIsVoicevoxEngineHasSpeakerListUpdated.setValue(false, nullptr);
+
+            auto speaker_list = processorRef.getVoicevoxSpeakerList();
+            const auto last_combo_text = comboboxSpeakerChoice->getText();
+            comboboxSpeakerChoice->clear(juce::dontSendNotification);
+            comboboxSpeakerChoice->addItemList(speaker_list, 1);
+            comboboxSpeakerChoice->setText(last_combo_text);
+
+            should_update_view = true;
+        }
     }
 
     if (should_update_view)
     {
-        updateView();
+        updateView(false);
         repaint();
     }
 }
 
-void AudioPluginAudioProcessorEditor::updateView()
+void AudioPluginAudioProcessorEditor::updateView(bool isInitial)
 {
     progressPanel->setVisible(valueIsVoicevoxEngineTaskRunning);
+
+    if (isInitial)
+    {
+        auto speaker_list = processorRef.getVoicevoxSpeakerList();
+        comboboxSpeakerChoice->clear(juce::dontSendNotification);
+        comboboxSpeakerChoice->addItemList(speaker_list, 1);
+    }
 }
