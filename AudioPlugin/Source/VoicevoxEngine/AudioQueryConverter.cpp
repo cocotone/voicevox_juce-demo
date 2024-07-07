@@ -41,6 +41,16 @@ voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const 
             }
         }
 
+        std::vector<float> volumes;
+        if (audio_query_json["volume"].isArray())
+        {
+            const auto volume_array = *audio_query_json["volume"].getArray();
+            for (const auto volume_element : volume_array)
+            {
+                volumes.push_back((float)volume_element);
+            }
+        }
+
         //  frame_phonemes = np.repeat(phonemes_array, phoneme_lengths_array)
         /*
         *   {
@@ -73,19 +83,8 @@ voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const 
             }
         }
 
-        std::vector<float> volumes;
-        if (audio_query_json["volume"].isArray())
-        {
-            const auto volume_array = *audio_query_json["volume"].getArray();
-            for (const auto volume_element : volume_array)
-            {
-                volumes.push_back((float)volume_element);
-            }
-        }
-
         result.f0Vector = f0s;
         result.volumeVector = volumes;
-        result.phonemeSize = phonemes.size();
         result.phonemeVector = repeat(phonemes, phoneme_lengths);
         result.sampleRate = audio_query_json["outputSamplingRate"];
     }
