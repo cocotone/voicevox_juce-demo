@@ -394,7 +394,7 @@ void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const
     request.text = text;
     request.processType = cctn::VoicevoxEngineProcessType::kTalk;
 
-    voicevoxEngine->requestTextToSpeechAsync(request,
+    voicevoxEngine->requestAsync(request,
         [this](const cctn::VoicevoxEngineArtefact& artefact) {
             juce::Logger::outputDebugString(artefact.requestId.toString());
 
@@ -430,7 +430,7 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
     request.sampleRate = 24000;
     request.processType = cctn::VoicevoxEngineProcessType::kHumming;
 
-    voicevoxEngine->requestTextToSpeechAsync(request,
+    voicevoxEngine->requestAsync(request,
         [this](const cctn::VoicevoxEngineArtefact& artefact) {
             juce::Logger::outputDebugString(artefact.requestId.toString());
 

@@ -82,8 +82,8 @@ public:
     std::map<juce::String, juce::uint32> getSpeakerIdentifierToSpeakerIdMap() const;
 
     //==============================================================================
-    VoicevoxEngineArtefact requestTextToSpeech(const VoicevoxEngineRequest& request);
-    void requestTextToSpeechAsync(const VoicevoxEngineRequest& request, std::function<void(const VoicevoxEngineArtefact&)> callback);
+    VoicevoxEngineArtefact requestSync(const VoicevoxEngineRequest& request);
+    void requestAsync(const VoicevoxEngineRequest& request, std::function<void(const VoicevoxEngineArtefact&)> callback);
 
 private:
     //==============================================================================

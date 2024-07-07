@@ -129,7 +129,7 @@ juce::StringArray VoicevoxEngine::getSpeakerIdentifierList() const
 }
 
 //==============================================================================
-VoicevoxEngineArtefact VoicevoxEngine::requestTextToSpeech(const VoicevoxEngineRequest& request)
+VoicevoxEngineArtefact VoicevoxEngine::requestSync(const VoicevoxEngineRequest& request)
 {
     VoicevoxEngineArtefact artefact;
 
@@ -150,7 +150,7 @@ VoicevoxEngineArtefact VoicevoxEngine::requestTextToSpeech(const VoicevoxEngineR
     return artefact;
 }
 
-void VoicevoxEngine::requestTextToSpeechAsync(const VoicevoxEngineRequest& request, std::function<void(const VoicevoxEngineArtefact&)> callback)
+void VoicevoxEngine::requestAsync(const VoicevoxEngineRequest& request, std::function<void(const VoicevoxEngineArtefact&)> callback)
 {
     VoicevoxEngineTask* engine_task = new VoicevoxEngineTask(voicevoxClient, request, callback);
     taskThread->addJob(engine_task, true);
