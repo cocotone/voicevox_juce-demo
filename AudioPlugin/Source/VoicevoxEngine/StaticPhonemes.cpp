@@ -49,7 +49,7 @@ public:
 
     ~PhonemeHelper() = default;
 
-    size_t id() const
+    std::int64_t id() const
     {
         auto it = std::find(phonemeList.begin(), phonemeList.end(), phoneme);
         if (it == phonemeList.end()) {
@@ -120,9 +120,9 @@ StaticPhonemes::~StaticPhonemes()
 JUCE_IMPLEMENT_SINGLETON (StaticPhonemes)
 
 //==============================================================================
-float StaticPhonemes::getPhonemeIndex(const std::string& phoneme) const
+std::int64_t StaticPhonemes::getPhonemeIndex(const std::string& phoneme) const
 {
-    return (float)PhonemeHelper(phoneme, _PHONEME_LIST).id();
+    return (std::int64_t)PhonemeHelper(phoneme, _PHONEME_LIST).id();
 }
 
 }

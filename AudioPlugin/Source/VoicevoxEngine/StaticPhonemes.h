@@ -12,7 +12,7 @@ public:
     //==============================================================================
     JUCE_DECLARE_SINGLETON(StaticPhonemes, false);
 
-    float getPhonemeIndex(const std::string& phoneme) const;
+    std::int64_t getPhonemeIndex(const std::string& phoneme) const;
 
 private:
     //==============================================================================
