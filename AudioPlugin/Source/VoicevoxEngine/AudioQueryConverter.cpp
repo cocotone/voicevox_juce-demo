@@ -1,4 +1,5 @@
 #include "AudioQueryConverter.h"
+#include "StaticPhonemes.h"
 
 namespace cctn
 {
@@ -36,7 +37,17 @@ voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const 
             {
                 for (int idx = 0; idx < (int)phoneme_frame["frame_length"]; idx++)
                 {
-                    result.phonemeVector.push_back((float)phoneme_frame["phoneme"]);
+                    try
+                    {
+                        const auto str_phoneme = phoneme_frame["phoneme"].toString().toStdString();
+                        const float phoneme_index = cctn::StaticPhonemes::getInstance()->getPhonemeIndex(str_phoneme);
+                        result.phonemeVector.push_back((float)phoneme_index);
+                    }
+                    catch (std::runtime_error e)
+                    {
+                        juce::Logger::outputDebugString(e.what());
+                        return voicevox::VoicevoxDecodeSource();
+                    }
                 }
             }
         }
