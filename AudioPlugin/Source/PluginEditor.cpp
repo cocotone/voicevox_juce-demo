@@ -166,7 +166,7 @@ void AudioPluginAudioProcessorEditor::resized()
 
         auto action_select_pane = property_pane.removeFromBottom(160);
         {
-#if 0
+#if 1
             auto action_talk_pane = action_select_pane.removeFromLeft(action_select_pane.getWidth() * 0.5f);
             {
                 buttonInvokeTalk->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
@@ -178,12 +178,13 @@ void AudioPluginAudioProcessorEditor::resized()
                 buttonInvokeHumming->setBounds(action_humming_pane.removeFromBottom(80).reduced(8));
                 comboboxHummingSpeakerChoice->setBounds(action_humming_pane.removeFromBottom(80).reduced(8));
             }
-#endif
+#else
             auto action_talk_pane = action_select_pane;
             {
                 buttonInvokeTalk->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
                 comboboxTalkSpeakerChoice->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
             }
+#endif
         }
         textEditor->setBounds(property_pane.reduced(8));
 
