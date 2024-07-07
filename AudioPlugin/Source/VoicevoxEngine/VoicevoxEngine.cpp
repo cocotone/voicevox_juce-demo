@@ -64,10 +64,11 @@ std::map<juce::String, juce::uint32> VoicevoxEngine::getSpeakerIdentifierToSpeak
             {
                 const juce::String style_name = styles["name"];
                 const juce::int64 style_id = styles["id"];
+                const juce::String style_type = styles["type"];
 
                 juce::String item_text = model_name + " - " + style_name;
 
-                if (style_id >= 3000)
+                if (style_type == "frame_decode")
                 {
                     item_text = item_text + " - " + "Humming";
                 }
@@ -104,10 +105,11 @@ juce::StringArray VoicevoxEngine::getSpeakerIdentifierList() const
             {
                 const juce::String style_name = styles["name"];
                 const juce::int64 style_id = styles["id"];
+                const juce::String style_type = styles["type"];
 
                 juce::String item_text = model_name + " - " + style_name;
 
-                if (style_id >= 3000)
+                if (style_type == "frame_decode")
                 {
                     item_text = item_text + " - " + "Humming";
                 }
