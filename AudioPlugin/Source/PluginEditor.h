@@ -37,8 +37,8 @@ private:
     juce::Value valueSpeakerId;
 
     std::unique_ptr<juce::TextEditor> textEditor;
-    std::unique_ptr<juce::TextButton> buttonInvokeSynthesis;
-    std::unique_ptr<juce::TextButton> buttonInvokeTTS;
+    std::unique_ptr<juce::TextButton> buttonInvokeTalk;
+    std::unique_ptr<juce::TextButton> buttonInvokeHumming;
 
     std::unique_ptr<juce::ComboBox> comboboxSpeakerChoice;
 

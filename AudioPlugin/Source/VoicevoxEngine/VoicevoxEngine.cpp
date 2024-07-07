@@ -31,17 +31,32 @@ public:
             return juce::ThreadPoolJob::JobStatus::jobHasFinished;
         }
 
-        const auto result = clientPtr.lock()->loadModel(request.speakerId);
-        if (result.failed())
+        if (!clientPtr.lock()->isModelLoaded(request.speakerId))
         {
-            juce::Logger::outputDebugString(result.getErrorMessage());
+            const auto result = clientPtr.lock()->loadModel(request.speakerId);
+            if (result.failed())
+            {
+                juce::Logger::outputDebugString(result.getErrorMessage());
+            }
         }
 
-        auto memory_wav = clientPtr.lock()->tts(request.speakerId, request.text);
-        if (memory_wav.has_value())
+        if (request.processType == VoicevoxEngineProcessType::kTalk)
         {
-            artefact.wavBinary = std::move(memory_wav.value());
+            auto memory_wav = clientPtr.lock()->tts(request.speakerId, request.text);
+            if (memory_wav.has_value())
+            {
+                artefact.wavBinary = std::move(memory_wav.value());
+            }
         }
+        else if (request.processType == VoicevoxEngineProcessType::kHumming)
+        {
+            auto memory_wav = clientPtr.lock()->humming(request.speakerId, request.text);
+            if (memory_wav.has_value())
+            {
+                artefact.wavBinary = std::move(memory_wav.value());
+            }
+        }
+
 
         if (callbackIfComplete != nullptr)
         {
@@ -98,15 +113,15 @@ void VoicevoxEngine::stop()
     voicevoxClient->disconnect();
 }
 
-juce::var VoicevoxEngine::getMetaJson()
+juce::var VoicevoxEngine::getMetaJson() const
 {
     return voicevoxClient->getMetasJson();
 }
 
 //==============================================================================
-std::map<juce::String, juce::int64> VoicevoxEngine::getSpeakerIdentifierToSpeakerIdMap()
+std::map<juce::String, juce::uint32> VoicevoxEngine::getSpeakerIdentifierToSpeakerIdMap() const
 {
-    std::map<juce::String, juce::int64> result;
+    std::map<juce::String, juce::uint32> result;
 
     const auto metas_json = voicevoxClient->getMetasJson();
 
@@ -133,7 +148,7 @@ std::map<juce::String, juce::int64> VoicevoxEngine::getSpeakerIdentifierToSpeake
                 }
 
                 // NOTE: Only support talk model.
-                if (style_id < 3000)
+                //if (style_id < 3000)
                 {
                     result[item_text] = style_id;
                 }
@@ -144,7 +159,7 @@ std::map<juce::String, juce::int64> VoicevoxEngine::getSpeakerIdentifierToSpeake
     return result;
 }
 
-juce::StringArray VoicevoxEngine::getSpeakerIdentifierList()
+juce::StringArray VoicevoxEngine::getSpeakerIdentifierList() const
 {
     juce::StringArray result;
 
@@ -173,7 +188,7 @@ juce::StringArray VoicevoxEngine::getSpeakerIdentifierList()
                 }
 
                 // NOTE: Only support talk model.
-                if (style_id < 3000)
+                //if (style_id < 3000)
                 {
                     result.add(item_text);
                 }
@@ -184,6 +199,7 @@ juce::StringArray VoicevoxEngine::getSpeakerIdentifierList()
     return result;
 }
 
+//==============================================================================
 VoicevoxEngineArtefact VoicevoxEngine::requestTextToSpeech(const VoicevoxEngineRequest& request)
 {
     VoicevoxEngineArtefact artefact;

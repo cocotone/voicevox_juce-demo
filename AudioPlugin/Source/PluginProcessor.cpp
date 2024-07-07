@@ -353,6 +353,42 @@ void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const
     request.requestId = juce::Uuid();
     request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedSpeakerIdentifier").toString()];
     request.text = text;
+    request.processType = cctn::VoicevoxEngineProcessType::kTalk;
+
+    voicevoxEngine->requestTextToSpeechAsync(request,
+        [this](const cctn::VoicevoxEngineArtefact& artefact) {
+            juce::Logger::outputDebugString(artefact.requestId.toString());
+
+            if (artefact.wavBinary.has_value())
+            {
+                juce::MessageManager::callAsync(
+                    [this, wav_binary = artefact.wavBinary.value()] {
+                        this->loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(wav_binary, true));
+
+                        editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
+                    });
+            }
+            else
+            {
+                juce::MessageManager::callAsync(
+                    [this] {
+                        this->clearAudioFileHandle();
+
+                        editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
+                    });
+            }
+        });
+
+    editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(true), nullptr);
+}
+
+void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce::String& text)
+{
+    cctn::VoicevoxEngineRequest request;
+    request.requestId = juce::Uuid();
+    request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedSpeakerIdentifier").toString()];
+    request.text = text;
+    request.processType = cctn::VoicevoxEngineProcessType::kHumming;
 
     voicevoxEngine->requestTextToSpeechAsync(request,
         [this](const cctn::VoicevoxEngineArtefact& artefact) {

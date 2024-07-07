@@ -73,27 +73,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     textEditor->setFont(textEditor->getFont().withPointHeight(20));
     addAndMakeVisible(textEditor.get());
 
-    buttonInvokeSynthesis = std::make_unique<juce::TextButton>();
-    buttonInvokeSynthesis->setButtonText(
-        juce::CharPointer_UTF8 ("\xe3\x81\x86\xe3\x81\x9f\xe3\x81\x86\xe3\x82\x88")
-    );
-    buttonInvokeSynthesis->onClick = [safe_this = juce::Component::SafePointer(this)] {
-        if(safe_this.getComponent() == nullptr)
-        {
-            return;
-        }
-
-        const auto speaker_id = (int)safe_this->valueSpeakerId.getValue();
-        const auto text = safe_this->textEditor->getText();
-        safe_this->processorRef.requestSynthesis(speaker_id, text);
-        };
-    addAndMakeVisible(buttonInvokeSynthesis.get());
-
-    buttonInvokeTTS = std::make_unique<juce::TextButton>();
-    buttonInvokeTTS->setButtonText(
+    buttonInvokeTalk = std::make_unique<juce::TextButton>();
+    buttonInvokeTalk->setButtonText(
         juce::CharPointer_UTF8 ("\xe3\x81\x97\xe3\x82\x83\xe3\x81\xb9\xe3\x82\x8b\xe3\x82\x88")
     );
-    buttonInvokeTTS->onClick = [safe_this = juce::Component::SafePointer(this)] {
+    buttonInvokeTalk->onClick = [safe_this = juce::Component::SafePointer(this)] {
         if(safe_this.getComponent() == nullptr)
         {
             return;
@@ -103,7 +87,24 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         const auto text = safe_this->textEditor->getText();
         safe_this->processorRef.requestTextToSpeech(speaker_id, text);
         };
-    addAndMakeVisible(buttonInvokeTTS.get());
+    addAndMakeVisible(buttonInvokeTalk.get());
+
+    buttonInvokeHumming = std::make_unique<juce::TextButton>();
+    buttonInvokeHumming->setButtonText(
+        juce::CharPointer_UTF8("\xe3\x81\x86\xe3\x81\x9f\xe3\x81\x86\xe3\x82\x88")
+    );
+    buttonInvokeHumming->onClick = [safe_this = juce::Component::SafePointer(this)] {
+        if (safe_this.getComponent() == nullptr)
+        {
+            return;
+        }
+
+        const auto speaker_id = (int)safe_this->valueSpeakerId.getValue();
+        const auto text = safe_this->textEditor->getText();
+        safe_this->processorRef.requestHumming(speaker_id, text);
+        };
+    addAndMakeVisible(buttonInvokeHumming.get());
+
 
     musicView = std::make_unique<MusicView>(processorRef.getAudioTransportSource(), processorRef.getAudioThumbnail());
     addAndMakeVisible(musicView.get());
@@ -148,17 +149,16 @@ void AudioPluginAudioProcessorEditor::resized()
 
     {
         auto bottom_pane = rect_area.removeFromBottom(200);
-        //auto left_pane = rect_area.removeFromLeft(320);
-        auto right_pane = rect_area;
-        auto progress_area = right_pane;
+        auto property_pane = rect_area;
+        auto progress_area = property_pane;
 
-        //buttonUpdateVoicevoxMetas->setBounds(left_pane.removeFromBottom(80).reduced(8));
-        //jsonTreeView->setBounds(left_pane.reduced(8));
-
-        buttonInvokeTTS->setBounds(right_pane.removeFromBottom(80).reduced(8));
-        //buttonInvokeSynthesis->setBounds(right_pane.removeFromBottom(80).reduced(8));
-        comboboxSpeakerChoice->setBounds(right_pane.removeFromBottom(80).reduced(8));
-        textEditor->setBounds(right_pane.reduced(8));
+        auto button_row = property_pane.removeFromBottom(80);
+        {
+            buttonInvokeTalk->setBounds(button_row.removeFromLeft(button_row.getWidth() * 0.5f).reduced(8));
+            buttonInvokeHumming->setBounds(button_row.reduced(8));
+        }
+        comboboxSpeakerChoice->setBounds(property_pane.removeFromBottom(80).reduced(8));
+        textEditor->setBounds(property_pane.reduced(8));
 
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));

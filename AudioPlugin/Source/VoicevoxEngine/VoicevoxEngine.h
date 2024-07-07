@@ -7,6 +7,12 @@
 namespace cctn
 {
 
+enum VoicevoxEngineProcessType
+{
+    kTalk = 0,
+    kHumming,
+};
+
 //==============================================================================
 struct VoicevoxEngineArtefact
 {
@@ -20,8 +26,9 @@ struct VoicevoxEngineArtefact
 struct VoicevoxEngineRequest
 {
     juce::Uuid requestId;
-    juce::int64 speakerId { 0 };
+    juce::uint32 speakerId { 0 };
     juce::String text{ "" };
+    VoicevoxEngineProcessType processType{ VoicevoxEngineProcessType::kTalk };
 
     JUCE_LEAK_DETECTOR(VoicevoxEngineRequest)
 };
@@ -59,9 +66,12 @@ public:
     void stop();
 
     //==============================================================================
-    juce::var getMetaJson();
-    std::map<juce::String, juce::int64> getSpeakerIdentifierToSpeakerIdMap();
-    juce::StringArray getSpeakerIdentifierList();
+    juce::var getMetaJson() const;
+    
+    juce::StringArray getSpeakerIdentifierList() const;
+    std::map<juce::String, juce::uint32> getSpeakerIdentifierToSpeakerIdMap() const;
+
+    //==============================================================================
     VoicevoxEngineArtefact requestTextToSpeech(const VoicevoxEngineRequest& request);
     void requestTextToSpeechAsync(const VoicevoxEngineRequest& request, std::function<void(const VoicevoxEngineArtefact&)> callback);
 
