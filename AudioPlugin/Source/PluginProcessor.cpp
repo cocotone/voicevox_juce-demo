@@ -131,6 +131,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     voicevoxSpeakerIdentifierList = voicevoxEngine->getSpeakerIdentifierList();
 
     editorState.setProperty("VoicevoxEngine_HasSpeakerIdUpdated", juce::var(true), nullptr);
+    
+    juce::Logger::outputDebugString(this->getMetaJsonStringify());
 }
 
 void AudioPluginAudioProcessor::releaseResources()
