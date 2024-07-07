@@ -21,11 +21,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     applicationState.addListener(this);
 
     editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
-    editorState.setProperty("VoicevoxEngine_SelectedSpeakerIdentifier", juce::var(""), nullptr);
+    editorState.setProperty("VoicevoxEngine_SelectedTalkSpeakerIdentifier", juce::var(""), nullptr);
+    editorState.setProperty("VoicevoxEngine_SelectedHummingSpeakerIdentifier", juce::var(""), nullptr);
     editorState.setProperty("VoicevoxEngine_HasSpeakerListUpdated", juce::var(false), nullptr);
 
     voicevoxMapSpeakerIdentifierToSpeakerId.clear();
-    voicevoxSpeakerIdentifierList.clear();
+    voicevoxTalkSpeakerIdentifierList.clear();
+    voicevoxHummingSpeakerIdentifierList.clear();
 
     // Audio file player related.
     audioFormatManager = std::make_unique<juce::AudioFormatManager>();
@@ -128,7 +130,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
     voicevoxEngine->start();
     voicevoxMapSpeakerIdentifierToSpeakerId = voicevoxEngine->getSpeakerIdentifierToSpeakerIdMap();
-    voicevoxSpeakerIdentifierList = voicevoxEngine->getSpeakerIdentifierList();
+    voicevoxTalkSpeakerIdentifierList = voicevoxEngine->getTalkSpeakerIdentifierList();
+    voicevoxHummingSpeakerIdentifierList = voicevoxEngine->getHummingSpeakerIdentifierList();
 
     editorState.setProperty("VoicevoxEngine_HasSpeakerIdUpdated", juce::var(true), nullptr);
     
@@ -138,7 +141,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 void AudioPluginAudioProcessor::releaseResources()
 {
     voicevoxEngine->stop();
-    voicevoxSpeakerIdentifierList.clear();
+    voicevoxTalkSpeakerIdentifierList.clear();
+    voicevoxHummingSpeakerIdentifierList.clear();
     voicevoxMapSpeakerIdentifierToSpeakerId.clear();
 }
 
@@ -392,7 +396,7 @@ void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const
 {
     cctn::VoicevoxEngineRequest request;
     request.requestId = juce::Uuid();
-    request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedSpeakerIdentifier").toString()];
+    request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedTalkSpeakerIdentifier").toString()];
     request.text = text;
     request.processType = cctn::VoicevoxEngineProcessType::kTalk;
 
@@ -427,7 +431,7 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
 {
     cctn::VoicevoxEngineRequest request;
     request.requestId = juce::Uuid();
-    request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedSpeakerIdentifier").toString()];
+    request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedHummingSpeakerIdentifier").toString()];
     request.audioQuery = text;
     request.sampleRate = 24000;
     request.processType = cctn::VoicevoxEngineProcessType::kHumming;

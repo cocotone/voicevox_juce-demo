@@ -23,14 +23,11 @@ const std::array<std::string, 10> _P_LIST3 = {"hy", "i", "j", "k", "kw", "ky", "
 const std::array<std::string, 10> _P_LIST4 = {"o", "p", "py", "r", "ry", "s", "sh", "t", "ts", "ty"};
 const std::array<std::string, 5> _P_LIST5 = {"u", "v", "w", "y", "z"};
 
-// Concatenate all phoneme lists
-std::vector<std::string> _PHONEME_LIST;
+const std::vector<std::string> UNVOICED_MORA_TAIL_PHONEMES = { "A", "I", "U", "E", "O", "cl", "pau" };
+const std::vector<std::string> MORA_TAIL_PHONEMES = { "a", "i", "u", "e", "o", "N", "A", "I", "U", "E", "O", "cl", "pau" };
 
 // Number of elements in the phoneme list
 const size_t _NUM_PHONEME = _P_LIST1.size() + _P_LIST2.size() + _P_LIST3.size() + _P_LIST4.size() + _P_LIST5.size();
-
-const std::vector<std::string> UNVOICED_MORA_TAIL_PHONEMES = {"A", "I", "U", "E", "O", "cl", "pau"};
-const std::vector<std::string> MORA_TAIL_PHONEMES = {"a", "i", "u", "e", "o", "N", "A", "I", "U", "E", "O", "cl", "pau"};
 
 class PhonemeHelper
 {
@@ -82,47 +79,33 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PhonemeHelper)
 };
 
-// Initialize _PHONEME_LIST in global scope
-void initialize_phoneme_list()
-{
-    _PHONEME_LIST.clear();
-    _PHONEME_LIST.insert(_PHONEME_LIST.end(), _P_LIST1.begin(), _P_LIST1.end());
-    _PHONEME_LIST.insert(_PHONEME_LIST.end(), _P_LIST2.begin(), _P_LIST2.end());
-    _PHONEME_LIST.insert(_PHONEME_LIST.end(), _P_LIST3.begin(), _P_LIST3.end());
-    _PHONEME_LIST.insert(_PHONEME_LIST.end(), _P_LIST4.begin(), _P_LIST4.end());
-    _PHONEME_LIST.insert(_PHONEME_LIST.end(), _P_LIST5.begin(), _P_LIST5.end());
-}
-
-// Function to get the index of a phoneme from _PHONEME_LIST
-size_t get_phoneme_index(const std::string& phoneme)
-{
-    auto it = std::find(_PHONEME_LIST.begin(), _PHONEME_LIST.end(), phoneme);
-    if (it == _PHONEME_LIST.end()) {
-        throw std::runtime_error("Invalid phoneme: " + phoneme);
-    }
-    return std::distance(_PHONEME_LIST.begin(), it);
-}
-
 }
 
 //==============================================================================
 StaticPhonemes::StaticPhonemes()
 {
-    initialize_phoneme_list();
+    initializePhonemeList();
 }
 
 StaticPhonemes::~StaticPhonemes()
 {
-    clearSingletonInstance();
+    phonemeList.clear();
 }
 
-//==============================================================================
-JUCE_IMPLEMENT_SINGLETON (StaticPhonemes)
+void StaticPhonemes::initializePhonemeList()
+{
+    phonemeList.clear();
+    phonemeList.insert(phonemeList.end(), _P_LIST1.begin(), _P_LIST1.end());
+    phonemeList.insert(phonemeList.end(), _P_LIST2.begin(), _P_LIST2.end());
+    phonemeList.insert(phonemeList.end(), _P_LIST3.begin(), _P_LIST3.end());
+    phonemeList.insert(phonemeList.end(), _P_LIST4.begin(), _P_LIST4.end());
+    phonemeList.insert(phonemeList.end(), _P_LIST5.begin(), _P_LIST5.end());
+}
 
 //==============================================================================
 std::int64_t StaticPhonemes::getPhonemeIndex(const std::string& phoneme) const
 {
-    return (std::int64_t)PhonemeHelper(phoneme, _PHONEME_LIST).id();
+    return (std::int64_t)PhonemeHelper(phoneme, phonemeList).id();
 }
 
 }

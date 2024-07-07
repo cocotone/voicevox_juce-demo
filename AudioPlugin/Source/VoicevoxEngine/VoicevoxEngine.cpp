@@ -15,6 +15,8 @@ VoicevoxEngine::VoicevoxEngine()
         juce::ThreadPool::Options()
         .withThreadName("VoicevoxEngineTaskThread");
     taskThread = std::make_unique<juce::ThreadPool>(options);
+
+
 }
 
 VoicevoxEngine::~VoicevoxEngine()
@@ -89,19 +91,19 @@ std::map<juce::String, juce::uint32> VoicevoxEngine::getSpeakerIdentifierToSpeak
     return result;
 }
 
-juce::StringArray VoicevoxEngine::getSpeakerIdentifierList() const
+juce::StringArray VoicevoxEngine::getTalkSpeakerIdentifierList() const
 {
     juce::StringArray result;
 
     const auto metas_json = voicevoxClient->getMetasJson();
-    
+
     if (metas_json.isArray())
     {
         for (const auto& element : *metas_json.getArray())
         {
             const juce::String model_name = element["name"];
 
-            for(const auto& styles : *element["styles"].getArray())
+            for (const auto& styles : *element["styles"].getArray())
             {
                 const juce::String style_name = styles["name"];
                 const juce::int64 style_id = styles["id"];
@@ -119,7 +121,7 @@ juce::StringArray VoicevoxEngine::getSpeakerIdentifierList() const
                 }
 
                 // NOTE: Only support talk model.
-                //if (style_id < 3000)
+                if (style_id < 3000)
                 {
                     result.add(item_text);
                 }
@@ -129,6 +131,48 @@ juce::StringArray VoicevoxEngine::getSpeakerIdentifierList() const
 
     return result;
 }
+
+juce::StringArray VoicevoxEngine::getHummingSpeakerIdentifierList() const
+{
+    juce::StringArray result;
+
+    const auto metas_json = voicevoxClient->getMetasJson();
+
+    if (metas_json.isArray())
+    {
+        for (const auto& element : *metas_json.getArray())
+        {
+            const juce::String model_name = element["name"];
+
+            for (const auto& styles : *element["styles"].getArray())
+            {
+                const juce::String style_name = styles["name"];
+                const juce::int64 style_id = styles["id"];
+                const juce::String style_type = styles["type"];
+
+                juce::String item_text = model_name + " - " + style_name;
+
+                if (style_type == "frame_decode")
+                {
+                    item_text = item_text + " - " + "Humming";
+                }
+                else
+                {
+                    item_text = item_text + " - " + "Talk";
+                }
+
+                // NOTE: Only support humming model.
+                if (style_id >= 3000)
+                {
+                    result.add(item_text);
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
 
 //==============================================================================
 VoicevoxEngineArtefact VoicevoxEngine::requestSync(const VoicevoxEngineRequest& request)

@@ -67,7 +67,8 @@ public:
     juce::ValueTree& getEditorState() { return editorState; }
 
     //==============================================================================
-    const juce::StringArray& getVoicevoxSpeakerList() const { return voicevoxSpeakerIdentifierList; };
+    const juce::StringArray& getVoicevoxTalkSpeakerList() const { return voicevoxTalkSpeakerIdentifierList; };
+    const juce::StringArray& getVoicevoxHummingSpeakerList() const { return voicevoxHummingSpeakerIdentifierList; };
     const std::map<juce::String, juce::uint32>& getVoicevoxSpeakerMap() const { return voicevoxMapSpeakerIdentifierToSpeakerId; };
 
 private:
@@ -96,7 +97,8 @@ private:
     juce::ValueTree applicationState{ "ApplicationState", {} };
     juce::ValueTree editorState;
 
-    juce::StringArray voicevoxSpeakerIdentifierList;
+    juce::StringArray voicevoxTalkSpeakerIdentifierList;
+    juce::StringArray voicevoxHummingSpeakerIdentifierList;
     std::map<juce::String, juce::uint32> voicevoxMapSpeakerIdentifierToSpeakerId;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)

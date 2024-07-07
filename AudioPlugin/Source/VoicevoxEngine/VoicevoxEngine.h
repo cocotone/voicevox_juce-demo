@@ -80,7 +80,8 @@ public:
     //==============================================================================
     juce::var getMetaJson() const;
     
-    juce::StringArray getSpeakerIdentifierList() const;
+    juce::StringArray getTalkSpeakerIdentifierList() const;
+    juce::StringArray getHummingSpeakerIdentifierList() const;
     std::map<juce::String, juce::uint32> getSpeakerIdentifierToSpeakerIdMap() const;
 
     //==============================================================================

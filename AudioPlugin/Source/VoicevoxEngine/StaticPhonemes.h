@@ -10,16 +10,21 @@ class StaticPhonemes final
 {
 public:
     //==============================================================================
-    JUCE_DECLARE_SINGLETON(StaticPhonemes, false);
+    StaticPhonemes();
+    ~StaticPhonemes();
 
+    //==============================================================================
     std::int64_t getPhonemeIndex(const std::string& phoneme) const;
 
 private:
     //==============================================================================
-    StaticPhonemes();
-    ~StaticPhonemes();
+    void initializePhonemeList();
+
+    std::vector<std::string> phonemeList;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StaticPhonemes)
 };
+
+using SharedStaticPhonemes = juce::SharedResourcePointer<StaticPhonemes>;
 
 }

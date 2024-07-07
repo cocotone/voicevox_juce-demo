@@ -29,6 +29,7 @@ private:
     //==============================================================================
     AudioPluginAudioProcessor& processorRef;
 
+    // Deprecated
     std::unique_ptr<juce::TreeView> jsonTreeView;
     std::unique_ptr<juce::TreeViewItem> jsonTreeViewItemRoot;
     std::unique_ptr<juce::TextButton> buttonUpdateVoicevoxMetas;
@@ -40,7 +41,8 @@ private:
     std::unique_ptr<juce::TextButton> buttonInvokeTalk;
     std::unique_ptr<juce::TextButton> buttonInvokeHumming;
 
-    std::unique_ptr<juce::ComboBox> comboboxSpeakerChoice;
+    std::unique_ptr<juce::ComboBox> comboboxTalkSpeakerChoice;
+    std::unique_ptr<juce::ComboBox> comboboxHummingSpeakerChoice;
 
     std::unique_ptr<MusicView> musicView;
     std::unique_ptr<PlayerController> playerController;

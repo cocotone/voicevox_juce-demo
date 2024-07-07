@@ -21,6 +21,8 @@ std::vector<T> repeat(const std::vector<T>& input, const std::vector<T>& repeats
 
 voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const juce::String& audioQuery)
 {
+    SharedStaticPhonemes static_phonemes;
+
     voicevox::VoicevoxDecodeSource result;
     result.f0Vector.clear();
     result.phonemeVector.clear();
@@ -56,8 +58,9 @@ voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const 
             {
                 try
                 {
+                    
                     const auto str_phoneme = phoneme_frame["phoneme"].toString().toStdString();
-                    const std::int64_t phoneme_index = cctn::StaticPhonemes::getInstance()->getPhonemeIndex(str_phoneme);
+                    const std::int64_t phoneme_index = static_phonemes->getPhonemeIndex(str_phoneme);
                     const std::int64_t frame_length = phoneme_frame["frame_length"];
                     phonemes.push_back(phoneme_index);
                     phoneme_lengths.push_back(frame_length);
