@@ -16,7 +16,7 @@ enum VoicevoxEngineProcessType
 struct AudioBufferInfo
 {
     juce::AudioBuffer<float> audioBuffer{};
-    juce::uint32 sampleRate{ 0 };
+    double sampleRate{ 0 };
 
     JUCE_LEAK_DETECTOR(AudioBufferInfo)
 };
@@ -37,8 +37,10 @@ struct VoicevoxEngineRequest
     juce::Uuid requestId;
     juce::uint32 speakerId { 0 };
     juce::String text{ "" };
+    juce::String audioQuery{ "" };
     juce::uint32 sampleRate{ 0 };
-    VoicevoxEngineProcessType processType{ VoicevoxEngineProcessType::kTalk };
+    voicevox::VoicevoxDecodeSource decodeSource{};
+    cctn::VoicevoxEngineProcessType processType{ VoicevoxEngineProcessType::kTalk };
 
     JUCE_LEAK_DETECTOR(VoicevoxEngineRequest)
 };

@@ -2,6 +2,7 @@
 
 #include <juce_core/juce_core.h>
 #include "VoicevoxEngine.h"
+#include "AudioQueryConverter.h"
 
 namespace cctn
 {
@@ -50,26 +51,30 @@ public:
         }
         else if (request.processType == VoicevoxEngineProcessType::kHumming)
         {
-            auto output_blocks = clientPtr.lock()->humming(request.speakerId, request.text);
+            const auto decode_source = cctn::AudioQueryConverter::convertToDecodeSource(request.audioQuery);
+
+            auto output_blocks = clientPtr.lock()->humming(request.speakerId, decode_source);
             if (output_blocks.has_value())
             {
-                const auto& float_array_array = output_blocks.value();
-
-                juce::Array<float> buffer_one_channel;
-                buffer_one_channel.clear();
-                for (const auto& float_array : float_array_array)
-                {
-                    buffer_one_channel.addArray(float_array);
-                }
 
                 AudioBufferInfo audio_buffer_info;
-                audio_buffer_info.audioBuffer.clear();
-                int num_channels = 1;
-                int num_samples = buffer_one_channel.size();
-                audio_buffer_info.audioBuffer.setSize(num_channels, num_samples);
-                audio_buffer_info.audioBuffer.copyFrom(0, 0, buffer_one_channel.getRawDataPointer(), buffer_one_channel.size());
+                {
+                    const auto& float_array_array = output_blocks.value();
 
-                audio_buffer_info.sampleRate = request.sampleRate;
+                    juce::Array<float> buffer_one_channel;
+                    buffer_one_channel.clear();
+                    for (const auto& float_array : float_array_array)
+                    {
+                        buffer_one_channel.addArray(float_array);
+                    }
+
+                    audio_buffer_info.audioBuffer.clear();
+                    int num_channels = 1;
+                    int num_samples = buffer_one_channel.size();
+                    audio_buffer_info.audioBuffer.setSize(num_channels, num_samples);
+                    audio_buffer_info.audioBuffer.copyFrom(0, 0, buffer_one_channel.getRawDataPointer(), buffer_one_channel.size());
+                    audio_buffer_info.sampleRate = decode_source.sampleRate;
+                }
 
                 artefact.audioBufferInfo = std::move(audio_buffer_info);
             }
