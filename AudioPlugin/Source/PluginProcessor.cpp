@@ -316,6 +316,45 @@ void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputS
     }
 }
 
+void AudioPluginAudioProcessor::loadVoicevoxEngineAudioBufferInfo(const cctn::AudioBufferInfo& audioBufferInfo)
+{
+    // Unload the previous file source and delete it..
+    audioThumbnail->clear();
+    audioTransportSource->stop();
+    audioTransportSource->setSource(nullptr);
+    memoryAudioSource.reset();
+
+    juce::AudioBuffer<float> stereonized_buffer;
+    stereonized_buffer.setSize(2, audioBufferInfo.audioBuffer.getNumSamples());
+    stereonized_buffer.copyFrom(0, 0, audioBufferInfo.audioBuffer.getReadPointer(0), audioBufferInfo.audioBuffer.getNumSamples());
+    stereonized_buffer.copyFrom(1, 0, audioBufferInfo.audioBuffer.getReadPointer(0), audioBufferInfo.audioBuffer.getNumSamples());
+
+    memoryAudioSource = std::make_unique<juce::MemoryAudioSource>(stereonized_buffer, true, false);
+
+    audioTransportSource->setSource(memoryAudioSource.get(),
+        32768,
+        audioBufferingThread.get(),
+        audioBufferInfo.sampleRate,
+        2);
+
+    // Update audio thumbnail
+    audioBufferForThumbnail.clear();
+    audioBufferForThumbnail.makeCopyOf(stereonized_buffer, false);
+
+    juce::Uuid uuid;
+    audioThumbnail->setSource(&audioBufferForThumbnail, audioBufferInfo.sampleRate, uuid.hash());
+
+    // Update can play or not.
+    if (audioTransportSource->getTotalLength() > 0)
+    {
+        applicationState.setProperty("Player_CanPlay", juce::var(true), nullptr);
+    }
+    else
+    {
+        applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
+    }
+}
+
 void AudioPluginAudioProcessor::clearAudioFileHandle()
 {
     // Unload the previous file source and delete it..
@@ -388,17 +427,18 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
     request.requestId = juce::Uuid();
     request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedSpeakerIdentifier").toString()];
     request.text = text;
+    request.sampleRate = 24000;
     request.processType = cctn::VoicevoxEngineProcessType::kHumming;
 
     voicevoxEngine->requestTextToSpeechAsync(request,
         [this](const cctn::VoicevoxEngineArtefact& artefact) {
             juce::Logger::outputDebugString(artefact.requestId.toString());
 
-            if (artefact.wavBinary.has_value())
+            if (artefact.audioBufferInfo.has_value())
             {
                 juce::MessageManager::callAsync(
-                    [this, wav_binary = artefact.wavBinary.value()] {
-                        this->loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(wav_binary, true));
+                    [this, audio_buffer_info = artefact.audioBufferInfo.value()] {
+                        this->loadVoicevoxEngineAudioBufferInfo(audio_buffer_info);
 
                         editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
                     });

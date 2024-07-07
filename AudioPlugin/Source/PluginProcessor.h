@@ -50,6 +50,7 @@ public:
     //==============================================================================
     void loadAudioFile(const juce::File& fileToLoad);
     void loadAudioFileStream(std::unique_ptr<juce::InputStream> audioFileStream);
+    void loadVoicevoxEngineAudioBufferInfo(const cctn::AudioBufferInfo& audioBufferInfo);
     void clearAudioFileHandle();
 
     //==============================================================================
@@ -82,6 +83,7 @@ private:
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
     std::unique_ptr<juce::TimeSliceThread> audioBufferingThread;
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
+    std::unique_ptr<juce::MemoryAudioSource> memoryAudioSource;
     std::unique_ptr<juce::AudioTransportSource> audioTransportSource;
 
     juce::AudioThumbnailCache audioThumbnailCache{ 5 };

@@ -50,13 +50,30 @@ public:
         }
         else if (request.processType == VoicevoxEngineProcessType::kHumming)
         {
-            auto memory_wav = clientPtr.lock()->humming(request.speakerId, request.text);
-            if (memory_wav.has_value())
+            auto output_blocks = clientPtr.lock()->humming(request.speakerId, request.text);
+            if (output_blocks.has_value())
             {
-                artefact.wavBinary = std::move(memory_wav.value());
+                const auto& float_array_array = output_blocks.value();
+                
+                juce::Array<float> buffer_one_channel;
+                buffer_one_channel.clear();
+                for (const auto& float_array : float_array_array)
+                {
+                    buffer_one_channel.addArray(float_array);
+                }
+
+                AudioBufferInfo audio_buffer_info;
+                audio_buffer_info.audioBuffer.clear();
+                int num_channels = 1;
+                int num_samples = buffer_one_channel.size();
+                audio_buffer_info.audioBuffer.setSize(num_channels, num_samples);
+                audio_buffer_info.audioBuffer.copyFrom(0, 0, buffer_one_channel.getRawDataPointer(), buffer_one_channel.size());
+
+                audio_buffer_info.sampleRate = request.sampleRate;
+
+                artefact.audioBufferInfo = std::move(audio_buffer_info);
             }
         }
-
 
         if (callbackIfComplete != nullptr)
         {

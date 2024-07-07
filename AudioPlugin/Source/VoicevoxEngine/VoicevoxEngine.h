@@ -13,11 +13,20 @@ enum VoicevoxEngineProcessType
     kHumming,
 };
 
+struct AudioBufferInfo
+{
+    juce::AudioBuffer<float> audioBuffer{};
+    juce::uint32 sampleRate{ 0 };
+
+    JUCE_LEAK_DETECTOR(AudioBufferInfo)
+};
+
 //==============================================================================
 struct VoicevoxEngineArtefact
 {
     juce::Uuid requestId;
     std::optional<juce::MemoryBlock> wavBinary;
+    std::optional<cctn::AudioBufferInfo> audioBufferInfo;
 
     JUCE_LEAK_DETECTOR(VoicevoxEngineArtefact)
 };
@@ -28,6 +37,7 @@ struct VoicevoxEngineRequest
     juce::Uuid requestId;
     juce::uint32 speakerId { 0 };
     juce::String text{ "" };
+    juce::uint32 sampleRate{ 0 };
     VoicevoxEngineProcessType processType{ VoicevoxEngineProcessType::kTalk };
 
     JUCE_LEAK_DETECTOR(VoicevoxEngineRequest)
