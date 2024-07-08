@@ -432,7 +432,8 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
     cctn::VoicevoxEngineRequest request;
     request.requestId = juce::Uuid();
     request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedHummingSpeakerIdentifier").toString()];
-    request.audioQuery = text;
+    //request.audioQuery = text;
+    request.scoreJson = text;
     request.sampleRate = 24000;
     request.processType = cctn::VoicevoxEngineProcessType::kHumming;
 

@@ -15,8 +15,6 @@ VoicevoxEngine::VoicevoxEngine()
         juce::ThreadPool::Options()
         .withThreadName("VoicevoxEngineTaskThread");
     taskThread = std::make_unique<juce::ThreadPool>(options);
-
-
 }
 
 VoicevoxEngine::~VoicevoxEngine()

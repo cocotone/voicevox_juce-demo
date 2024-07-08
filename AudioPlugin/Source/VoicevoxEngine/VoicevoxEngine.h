@@ -38,6 +38,7 @@ struct VoicevoxEngineRequest
     juce::uint32 speakerId { 0 };
     juce::String text{ "" };
     juce::String audioQuery{ "" };
+    juce::String scoreJson{ "" };
     juce::uint32 sampleRate{ 0 };
     cctn::VoicevoxEngineProcessType processType{ VoicevoxEngineProcessType::kTalk };
 

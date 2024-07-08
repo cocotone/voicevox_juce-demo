@@ -3,6 +3,7 @@
 #include <juce_core/juce_core.h>
 #include "VoicevoxEngine.h"
 #include "AudioQueryConverter.h"
+#include "ScoreJsonConverter.h"
 
 namespace cctn
 {
@@ -52,8 +53,18 @@ public:
         else if (request.processType == VoicevoxEngineProcessType::kHumming)
         {
             double sample_rate_request = 0;
-            const auto decode_source = cctn::AudioQueryConverter::convertToSfDecodeSource(request.audioQuery, sample_rate_request);
-            const auto output_single_channel = clientPtr.lock()->singBySfDecode(request.speakerId, decode_source);
+            voicevox::VoicevoxSfDecodeSource sf_decode_source;
+
+            if(request.scoreJson.isNotEmpty())
+            {
+                sf_decode_source = cctn::ScoreJsonConverter::convertToSfDecodeSource(*clientPtr.lock().get(), request.audioQuery, sample_rate_request);
+            }
+            else if (request.audioQuery.isNotEmpty())
+            {
+                sf_decode_source = cctn::AudioQueryConverter::convertToSfDecodeSource(request.audioQuery, sample_rate_request);
+            }
+
+            const auto output_single_channel = clientPtr.lock()->singBySfDecode(request.speakerId, sf_decode_source);
             if (output_single_channel.has_value())
             {
                 AudioBufferInfo audio_buffer_info;
