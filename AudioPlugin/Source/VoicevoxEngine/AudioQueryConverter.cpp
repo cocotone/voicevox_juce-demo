@@ -19,11 +19,11 @@ std::vector<T> repeat(const std::vector<T>& input, const std::vector<T>& repeats
 }
 }
 
-voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const juce::String& audioQuery)
+voicevox::VoicevoxSfDecodeSource AudioQueryConverter::convertToSfDecodeSource(const juce::String& audioQuery, double& sampleRate)
 {
     SharedStaticPhonemes static_phonemes;
 
-    voicevox::VoicevoxDecodeSource result;
+    voicevox::VoicevoxSfDecodeSource result;
     result.f0Vector.clear();
     result.phonemeVector.clear();
 
@@ -51,16 +51,8 @@ voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const 
             }
         }
 
-        //  frame_phonemes = np.repeat(phonemes_array, phoneme_lengths_array)
-        /*
-        *   {
-                "phoneme": "e",
-                "frame_length": 2
-            },
-        */
         std::vector<std::int64_t> phonemes;
         std::vector<std::int64_t> phoneme_lengths;
-
         if (audio_query_json["phonemes"].isArray())
         {
             const auto phonemes_array = *audio_query_json["phonemes"].getArray();
@@ -78,7 +70,7 @@ voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const 
                 catch (std::runtime_error e)
                 {
                     juce::Logger::outputDebugString(e.what());
-                    return voicevox::VoicevoxDecodeSource();
+                    return voicevox::VoicevoxSfDecodeSource();
                 }
             }
         }
@@ -86,7 +78,9 @@ voicevox::VoicevoxDecodeSource AudioQueryConverter::convertToDecodeSource(const 
         result.f0Vector = f0s;
         result.volumeVector = volumes;
         result.phonemeVector = repeat(phonemes, phoneme_lengths);
-        result.sampleRate = audio_query_json["outputSamplingRate"];
+
+        // Update sample rate
+        sampleRate = audio_query_json["outputSamplingRate"];
     }
 
     return result;

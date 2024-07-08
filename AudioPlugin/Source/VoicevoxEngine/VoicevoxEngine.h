@@ -39,7 +39,6 @@ struct VoicevoxEngineRequest
     juce::String text{ "" };
     juce::String audioQuery{ "" };
     juce::uint32 sampleRate{ 0 };
-    voicevox::VoicevoxDecodeSource decodeSource{};
     cctn::VoicevoxEngineProcessType processType{ VoicevoxEngineProcessType::kTalk };
 
     JUCE_LEAK_DETECTOR(VoicevoxEngineRequest)

@@ -51,31 +51,21 @@ public:
         }
         else if (request.processType == VoicevoxEngineProcessType::kHumming)
         {
-            const auto decode_source = cctn::AudioQueryConverter::convertToDecodeSource(request.audioQuery);
-
-            auto output_blocks = clientPtr.lock()->humming(request.speakerId, decode_source);
-            if (output_blocks.has_value())
+            double sample_rate_request = 0;
+            const auto decode_source = cctn::AudioQueryConverter::convertToSfDecodeSource(request.audioQuery, sample_rate_request);
+            const auto output_single_channel = clientPtr.lock()->singBySfDecode(request.speakerId, decode_source);
+            if (output_single_channel.has_value())
             {
-
                 AudioBufferInfo audio_buffer_info;
                 {
-                    const auto& float_array_array = output_blocks.value();
-
-                    juce::Array<float> buffer_one_channel;
-                    buffer_one_channel.clear();
-                    for (const auto& float_array : float_array_array)
-                    {
-                        buffer_one_channel.addArray(float_array);
-                    }
-
-                    audio_buffer_info.audioBuffer.clear();
                     int num_channels = 1;
-                    int num_samples = buffer_one_channel.size();
+                    int num_samples = output_single_channel.value().size();
+                    const float* read_ptr = output_single_channel.value().getRawDataPointer();
                     audio_buffer_info.audioBuffer.setSize(num_channels, num_samples);
-                    audio_buffer_info.audioBuffer.copyFrom(0, 0, buffer_one_channel.getRawDataPointer(), buffer_one_channel.size());
-                    audio_buffer_info.sampleRate = decode_source.sampleRate;
+                    audio_buffer_info.audioBuffer.clear();
+                    audio_buffer_info.audioBuffer.copyFrom(0, 0, read_ptr, num_samples);
+                    audio_buffer_info.sampleRate = sample_rate_request;
                 }
-
                 artefact.audioBufferInfo = std::move(audio_buffer_info);
             }
         }
