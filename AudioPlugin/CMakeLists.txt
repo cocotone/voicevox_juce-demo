@@ -172,3 +172,49 @@ if(TARGET ${PLUGIN_NAME}_VST3)
             copy_directory $<TARGET_PROPERTY:voicevox::voicevox_resource,resource_open_jtalk_dic_dir> $<TARGET_FILE_DIR:${PLUGIN_NAME}_VST3>/open_jtalk_dic_utf_8
     )
 endif()
+
+# Pre link and post build command process for VST3...
+if(TARGET ${PLUGIN_NAME}_AU)
+    add_custom_command(
+        TARGET ${PLUGIN_NAME}_AU
+        PRE_LINK
+        COMMAND
+            ${CMAKE_COMMAND} -E
+            copy $<TARGET_FILE:voicevox::voicevox_core> $<TARGET_FILE_DIR:${PLUGIN_NAME}_AU>
+    )
+
+    add_custom_command(
+        TARGET ${PLUGIN_NAME}_AU
+        PRE_LINK
+        COMMAND
+            ${CMAKE_COMMAND} -E
+            copy $<TARGET_FILE:voicevox::onnxruntime> $<TARGET_FILE_DIR:${PLUGIN_NAME}_AU>
+    )
+
+    if(TARGET voicevox::onnxruntime_providers_shared)
+        add_custom_command(
+            TARGET ${PLUGIN_NAME}_AU
+            PRE_LINK
+            COMMAND
+                ${CMAKE_COMMAND} -E
+                copy $<TARGET_FILE:voicevox::onnxruntime_providers_shared> $<TARGET_FILE_DIR:${PLUGIN_NAME}_AU>
+        )
+    endif()
+
+    # Copy resource directory to build directory.
+    add_custom_command(
+        TARGET ${PLUGIN_NAME}_AU
+        POST_BUILD
+        COMMAND
+            ${CMAKE_COMMAND} -E
+            copy_directory $<TARGET_PROPERTY:voicevox::voicevox_resource,resource_model_dir> $<TARGET_FILE_DIR:${PLUGIN_NAME}_AU>/model
+    )
+
+    add_custom_command(
+        TARGET ${PLUGIN_NAME}_AU
+        POST_BUILD
+        COMMAND
+            ${CMAKE_COMMAND} -E
+            copy_directory $<TARGET_PROPERTY:voicevox::voicevox_resource,resource_open_jtalk_dic_dir> $<TARGET_FILE_DIR:${PLUGIN_NAME}_AU>/open_jtalk_dic_utf_8
+    )
+endif()
