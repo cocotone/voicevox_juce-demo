@@ -57,7 +57,18 @@ public:
 
             if(request.scoreJson.isNotEmpty())
             {
-                sf_decode_source = cctn::ScoreJsonConverter::convertToSfDecodeSource(*clientPtr.lock().get(), request.scoreJson);
+                const auto predict_speaker_id = clientPtr.lock()->getSongTeacherSpeakerId();
+                if (!clientPtr.lock()->isModelLoaded(predict_speaker_id))
+                {
+                    const auto result = clientPtr.lock()->loadModel(predict_speaker_id);
+                    if (result.failed())
+                    {
+                        juce::Logger::outputDebugString(result.getErrorMessage());
+                    }
+                }
+
+                const auto low_level_score = cctn::ScoreJsonConverter::convertToLowLevelScore(*clientPtr.lock().get(), request.scoreJson);
+                sf_decode_source = cctn::ScoreJsonConverter::convertToSfDecodeSource(low_level_score);
 
                 sample_rate_request = clientPtr.lock()->getSampleRate();
             }

@@ -22,6 +22,23 @@ struct AudioBufferInfo
 };
 
 //==============================================================================
+struct VoicevoxEngineLowLevelScore
+{
+    std::vector<std::int64_t> _note_consonant_vector{};
+    std::vector<std::int64_t> _note_vowel_vector{};
+    std::vector<std::int64_t> _note_length_vector{};
+    std::vector<std::int64_t> _phonemes{};
+    std::vector<std::int64_t> _phoneme_key_vector{};
+    std::vector<std::int64_t> _phoneme_length_vector{};
+
+    std::vector<float> f0Vector{};
+    std::vector<std::int64_t> phonemeVector{};
+    std::vector<float> volumeVector{};
+
+    JUCE_LEAK_DETECTOR(VoicevoxEngineLowLevelScore)
+};
+
+//==============================================================================
 struct VoicevoxEngineArtefact
 {
     juce::Uuid requestId;
