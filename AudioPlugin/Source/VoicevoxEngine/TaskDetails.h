@@ -57,7 +57,9 @@ public:
 
             if(request.scoreJson.isNotEmpty())
             {
-                sf_decode_source = cctn::ScoreJsonConverter::convertToSfDecodeSource(*clientPtr.lock().get(), request.audioQuery, sample_rate_request);
+                sf_decode_source = cctn::ScoreJsonConverter::convertToSfDecodeSource(*clientPtr.lock().get(), request.scoreJson);
+
+                sample_rate_request = clientPtr.lock()->getSampleRate();
             }
             else if (request.audioQuery.isNotEmpty())
             {

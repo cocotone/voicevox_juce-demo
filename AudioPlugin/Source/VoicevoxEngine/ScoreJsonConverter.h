@@ -9,7 +9,7 @@ namespace cctn
 class ScoreJsonConverter
 {
 public:
-    static voicevox::VoicevoxSfDecodeSource convertToSfDecodeSource(const voicevox::VoicevoxClient& voicevoxClient, const juce::String& scoreJson, double& sampleRate);
+    static voicevox::VoicevoxSfDecodeSource convertToSfDecodeSource(const voicevox::VoicevoxClient& voicevoxClient, const juce::String& scoreJson);
 
 private:
     ScoreJsonConverter() = default;

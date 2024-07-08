@@ -19,7 +19,7 @@ std::vector<T> repeat(const std::vector<T>& input, const std::vector<T>& repeats
 }
 }
 
-voicevox::VoicevoxSfDecodeSource ScoreJsonConverter::convertToSfDecodeSource(const voicevox::VoicevoxClient& voicevoxClient, const juce::String& scoreJson, double& sampleRate)
+voicevox::VoicevoxSfDecodeSource ScoreJsonConverter::convertToSfDecodeSource(const voicevox::VoicevoxClient& voicevoxClient, const juce::String& scoreJson)
 {
     SharedStaticPhonemes static_phonemes;
 
@@ -79,9 +79,6 @@ voicevox::VoicevoxSfDecodeSource ScoreJsonConverter::convertToSfDecodeSource(con
         result.f0Vector = f0s;
         result.volumeVector = volumes;
         result.phonemeVector = repeat(phonemes, phoneme_lengths);
-
-        // Update sample rate
-        sampleRate = audio_query_json["outputSamplingRate"];
     }
 
     return result;
