@@ -26,6 +26,7 @@ voicevox::VoicevoxSfDecodeSource AudioQueryConverter::convertToSfDecodeSource(co
     voicevox::VoicevoxSfDecodeSource result;
     result.f0Vector.clear();
     result.phonemeVector.clear();
+    result.volumeVector.clear();
 
     juce::var audio_query_json = juce::JSON::parse(audioQuery);
 
