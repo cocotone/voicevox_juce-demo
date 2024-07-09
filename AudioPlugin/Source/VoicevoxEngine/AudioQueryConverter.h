@@ -6,12 +6,15 @@
 namespace cctn
 {
 
+//==============================================================================
 class AudioQueryConverter
 {
 public:
+    //==============================================================================
     static voicevox::VoicevoxSfDecodeSource convertToSfDecodeSource(const juce::String& audioQuery, double& sampleRate);
 
 private:
+    //==============================================================================
     AudioQueryConverter() = default;
     ~AudioQueryConverter() = default;
 

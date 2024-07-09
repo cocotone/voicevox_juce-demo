@@ -4,6 +4,7 @@
 namespace cctn
 {
 
+//==============================================================================
 namespace
 {
 // Function to repeat elements in a vector
@@ -19,6 +20,7 @@ std::vector<T> repeat(const std::vector<T>& input, const std::vector<T>& repeats
 }
 }
 
+//==============================================================================
 voicevox::VoicevoxSfDecodeSource AudioQueryConverter::convertToSfDecodeSource(const juce::String& audioQuery, double& sampleRate)
 {
     SharedStaticPhonemes static_phonemes;
