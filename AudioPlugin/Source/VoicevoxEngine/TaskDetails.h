@@ -84,7 +84,7 @@ public:
                 {
                     int num_channels = 1;
                     int num_samples = output_single_channel.value().size();
-                    const float* read_ptr = output_single_channel.value().getRawDataPointer();
+                    const float* read_ptr = output_single_channel.value().data();
                     audio_buffer_info.audioBuffer.setSize(num_channels, num_samples);
                     audio_buffer_info.audioBuffer.clear();
                     audio_buffer_info.audioBuffer.copyFrom(0, 0, read_ptr, num_samples);
