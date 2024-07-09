@@ -71,20 +71,20 @@ std::vector<int64_t> calculatePhonemeLengthVector(const std::vector<int64_t>& co
 //==============================================================================
 std::optional<cctn::VoicevoxEngineLowLevelScore> ScoreJsonConverter::convertToLowLevelScore(voicevox::VoicevoxClient& voicevoxClient, const juce::String& scoreJson)
 {
+    // Parse Score.json format.
     SharedStaticPhonemes static_phonemes;
 
-    cctn::VoicevoxEngineLowLevelScore result;
+    std::vector<int64_t> note_lengths;
+    std::vector<int64_t> note_consonants;
+    std::vector<int64_t> note_vowels;
+    std::vector<int64_t> phonemes;
+    std::vector<int64_t> phoneme_keys;
 
     juce::var score_json = juce::JSON::parse(scoreJson);
+    bool is_score_json_valid = false;
 
     if (score_json.isObject() && score_json["notes"].isArray())
     {
-        std::vector<int64_t> note_lengths;
-        std::vector<int64_t> note_consonants;
-        std::vector<int64_t> note_vowels;
-        std::vector<int64_t> phonemes;
-        std::vector<int64_t> phoneme_keys;
-
         const auto* notes_array = score_json["notes"].getArray();
         for (const auto& note : *notes_array)
         {
@@ -131,31 +131,60 @@ std::optional<cctn::VoicevoxEngineLowLevelScore> ScoreJsonConverter::convertToLo
             }
         }
 
-        // Assign to C++ object
-        result._note_consonant_vector = note_consonants;
-        result._note_vowel_vector = note_vowels;
-        result._note_length_vector = note_lengths;
-        result._phonemes = phonemes;
-        result._phoneme_key_vector = phoneme_keys;
+        is_score_json_valid = true;
     }
 
-    if(score_json.isObject() && score_json["notes"].isArray())
+    if (!is_score_json_valid)
     {
-        const auto predict_speaker_id = voicevoxClient.getSongTeacherSpeakerId();
-
-        auto consonant_length_vector = voicevoxClient.predictSingConsonantLength(predict_speaker_id, result._note_consonant_vector, result._note_vowel_vector, result._note_length_vector).value();
-
-        result._phoneme_length_vector = calculatePhonemeLengthVector(consonant_length_vector, result._note_length_vector);
-
-        const auto repeated_phonemes = repeat(result._phonemes, result._phoneme_length_vector);
-        const auto repeated_keys = repeat(result._phoneme_key_vector, result._phoneme_length_vector);
-
-        result.f0Vector = voicevoxClient.predictSingF0(predict_speaker_id, repeated_phonemes, repeated_keys).value();
-
-        result.volumeVector = voicevoxClient.predictSingVolume(predict_speaker_id, repeated_phonemes, repeated_keys, result.f0Vector).value();
-
-        result.phonemeVector = repeat(result._phonemes, result._phoneme_length_vector);
+        return std::nullopt;
     }
+
+    // Make VoicevoxEngineLowLevelScore data.
+    cctn::VoicevoxEngineLowLevelScore result;
+    
+    // Assign to C++ object
+    result._note_consonant_vector = note_consonants;
+    result._note_vowel_vector = note_vowels;
+    result._note_length_vector = note_lengths;
+    result._phonemes = phonemes;
+    result._phoneme_key_vector = phoneme_keys;
+
+    const auto predict_speaker_id = voicevoxClient.getSongTeacherSpeakerId();
+
+    auto consonant_length_vector_optional = 
+        voicevoxClient.predictSingConsonantLength(predict_speaker_id, result._note_consonant_vector, result._note_vowel_vector, result._note_length_vector);
+
+    if (!consonant_length_vector_optional.has_value())
+    {
+        return std::nullopt;
+    }
+
+    result._phoneme_length_vector = calculatePhonemeLengthVector(consonant_length_vector_optional.value(), result._note_length_vector);
+
+    const auto repeated_phonemes = repeat(result._phonemes, result._phoneme_length_vector);
+    const auto repeated_keys = repeat(result._phoneme_key_vector, result._phoneme_length_vector);
+    
+    const auto predeicted_f0_vector_optional =
+        voicevoxClient.predictSingF0(predict_speaker_id, repeated_phonemes, repeated_keys);
+
+    if (!predeicted_f0_vector_optional.has_value())
+    {
+        return std::nullopt;
+    }
+
+    result.f0Vector = predeicted_f0_vector_optional.value();
+
+    const auto predicted_volume_vector =
+        voicevoxClient.predictSingVolume(predict_speaker_id, repeated_phonemes, repeated_keys, result.f0Vector);
+
+    if (!predicted_volume_vector.has_value())
+    {
+        return std::nullopt;
+    }
+
+    result.volumeVector = predicted_volume_vector.value();
+
+    result.phonemeVector = repeat(result._phonemes, result._phoneme_length_vector);
 
     return result;
 }
