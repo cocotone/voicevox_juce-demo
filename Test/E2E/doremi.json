@@ -1,0 +1,99 @@
+{
+  "notes": [
+    {
+      "key": null,
+      "frame_length": 15,
+      "lyric": ""
+    },
+    {
+      "key": 60,
+      "frame_length": 45,
+      "lyric": "ド"
+    },
+    {
+      "key": 62,
+      "frame_length": 45,
+      "lyric": "レ"
+    },
+    {
+      "key": 64,
+      "frame_length": 45,
+      "lyric": "ミ"
+    },
+    {
+      "key": 65,
+      "frame_length": 45,
+      "lyric": "ファ"
+    },
+    {
+      "key": 67,
+      "frame_length": 45,
+      "lyric": "ソ"
+    },
+    {
+      "key": 69,
+      "frame_length": 45,
+      "lyric": "ラ"
+    },
+    {
+      "key": 71,
+      "frame_length": 45,
+      "lyric": "シ"
+    },
+    {
+      "key": 72,
+      "frame_length": 90,
+      "lyric": "ド"
+    },
+    {
+      "key": null,
+      "frame_length": 15,
+      "lyric": ""
+    },
+    {
+      "key": 60,
+      "frame_length": 45,
+      "lyric": "ど"
+    },
+    {
+      "key": 62,
+      "frame_length": 45,
+      "lyric": "れ"
+    },
+    {
+      "key": 64,
+      "frame_length": 45,
+      "lyric": "み"
+    },
+    {
+      "key": 65,
+      "frame_length": 45,
+      "lyric": "ふぁ"
+    },
+    {
+      "key": 67,
+      "frame_length": 45,
+      "lyric": "そ"
+    },
+    {
+      "key": 69,
+      "frame_length": 45,
+      "lyric": "ら"
+    },
+    {
+      "key": 71,
+      "frame_length": 45,
+      "lyric": "し"
+    },
+    {
+      "key": 72,
+      "frame_length": 90,
+      "lyric": "ど"
+    },
+    {
+      "key": null,
+      "frame_length": 15,
+      "lyric": ""
+    }
+  ]
+}
