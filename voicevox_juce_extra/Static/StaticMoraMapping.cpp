@@ -1,5 +1,3 @@
-#include "StaticMoraMapping.h"
-
 namespace cctn
 {
 

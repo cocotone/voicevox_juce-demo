@@ -65,5 +65,7 @@ find_package(juce REQUIRED)
 
 find_package(voicevox_juce REQUIRED)
 
+juce_add_module(voicevox_juce_extra ALIAS_NAMESPACE cocotone)
+
 # Add plugin project
 add_subdirectory(AudioPlugin)

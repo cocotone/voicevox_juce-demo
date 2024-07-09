@@ -1,8 +1,5 @@
 #pragma once
 
-#include <juce_core/juce_core.h>
-#include "VoicevoxEngine.h"
-
 namespace cctn
 {
 

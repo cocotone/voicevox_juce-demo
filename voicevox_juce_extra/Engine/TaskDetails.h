@@ -2,8 +2,8 @@
 
 #include <juce_core/juce_core.h>
 #include "VoicevoxEngine.h"
-#include "AudioQueryConverter.h"
-#include "ScoreJsonConverter.h"
+#include "Format/AudioQueryConverter.h"
+#include "Format/ScoreJsonConverter.h"
 
 namespace cctn
 {

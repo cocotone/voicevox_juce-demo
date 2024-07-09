@@ -2,7 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
-#include "VoicevoxEngine/VoicevoxEngine.h"
+#include <voicevox_juce_extra/voicevox_juce_extra.h>
 
 //==============================================================================
 class AudioPluginAudioProcessor final
