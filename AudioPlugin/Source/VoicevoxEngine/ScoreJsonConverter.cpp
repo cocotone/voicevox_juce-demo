@@ -1,5 +1,6 @@
 #include "ScoreJsonConverter.h"
 #include "StaticPhonemes.h"
+#include "StaticMoraMapping.h"
 
 namespace cctn
 {
@@ -95,6 +96,7 @@ std::optional<cctn::VoicevoxEngineLowLevelScore> ScoreJsonConverter::convertToLo
 {
     // Parse Score.json format.
     SharedStaticPhonemes static_phonemes;
+    SharedStaticMoraMapping static_mora_mapping;
 
     std::vector<int64_t> note_lengths;
     std::vector<int64_t> note_consonants;
@@ -131,25 +133,37 @@ std::optional<cctn::VoicevoxEngineLowLevelScore> ScoreJsonConverter::convertToLo
                 {
                 }
 
-                // Fixed values as per requirement
-                const std::string consonant = "r";
-                const std::string vowel = "a";
+                const auto mora_kana = hiraganaToKatakana(lyric);
+                const auto mora_phoneme_optional = static_mora_mapping->convertMoraKanaToMoraPhonemes(mora_kana);
 
-                const int consonant_id = (consonant.empty()) ? -1 : static_phonemes->getPhonemeIndex(consonant);
-                const int vowel_id = static_phonemes->getPhonemeIndex(vowel);
-
-                note_lengths.push_back(frame_length);
-                note_consonants.push_back(consonant_id);
-                note_vowels.push_back(vowel_id);
-
-                if (consonant_id != -1)
+                if (mora_phoneme_optional.has_value())
                 {
-                    phonemes.push_back(consonant_id);
+                    const auto& mora_phoneme = mora_phoneme_optional.value();
+
+                    // Fixed values as per requirement
+                    const std::string consonant = mora_phoneme.consonant.has_value() ? mora_phoneme.consonant.value().toStdString() : "";
+                    const std::string vowel = mora_phoneme.vowel.has_value() ? mora_phoneme.vowel.value().toStdString() : "";
+
+                    const int consonant_id = (consonant.empty()) ? -1 : static_phonemes->getPhonemeIndex(consonant);
+                    const int vowel_id = static_phonemes->getPhonemeIndex(vowel);
+
+                    note_lengths.push_back(frame_length);
+                    note_consonants.push_back(consonant_id);
+                    note_vowels.push_back(vowel_id);
+
+                    if (consonant_id != -1)
+                    {
+                        phonemes.push_back(consonant_id);
+                        phoneme_keys.push_back(key);
+                    }
+
+                    phonemes.push_back(vowel_id);
                     phoneme_keys.push_back(key);
                 }
-
-                phonemes.push_back(vowel_id);
-                phoneme_keys.push_back(key);
+                else
+                {
+                    juce::Logger::outputDebugString("[voicevox_juce_extra] " + mora_kana + " is not found in mora mapping.");
+                }
             }
         }
 

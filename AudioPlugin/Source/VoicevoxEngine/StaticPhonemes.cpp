@@ -92,7 +92,7 @@ private:
 //==============================================================================
 StaticPhonemes::StaticPhonemes()
 {
-    initializePhonemeList();
+    initialize();
 }
 
 StaticPhonemes::~StaticPhonemes()
@@ -100,7 +100,8 @@ StaticPhonemes::~StaticPhonemes()
     phonemeList.clear();
 }
 
-void StaticPhonemes::initializePhonemeList()
+//==============================================================================
+void StaticPhonemes::initialize()
 {
     phonemeList.clear();
     phonemeList.insert(phonemeList.end(), kPhonemeList1.begin(), kPhonemeList1.end());

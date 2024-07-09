@@ -18,8 +18,9 @@ public:
 
 private:
     //==============================================================================
-    void initializePhonemeList();
+    void initialize();
 
+    //==============================================================================
     std::vector<std::string> phonemeList;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StaticPhonemes)
