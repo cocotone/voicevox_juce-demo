@@ -18,6 +18,28 @@ std::vector<T> repeat(const std::vector<T>& input, const std::vector<T>& repeats
     return result;
 }
 
+juce::String hiraganaToKatakana(const juce::String& input)
+{
+    juce::String result;
+    juce::CharPointer_UTF8 utf8 = input.toUTF8();
+
+    while (!utf8.isEmpty())
+    {
+        juce::juce_wchar wide_char_code = utf8.getAndAdvance();
+
+        // Check if the character is in the Hiragana range (U+3041 to U+3096)
+        if (wide_char_code >= 0x3041 && wide_char_code <= 0x3096)
+        {
+            // Convert to Katakana by adding 0x60
+            wide_char_code += 0x60;
+        }
+
+        result += juce::String::charToString(wide_char_code);
+    }
+
+    return result;
+}
+
 std::vector<int64_t> calculatePhonemeLengthVector(const std::vector<int64_t>& consonant_lengths_vector, const std::vector<int64_t>& note_lengths_vector)
 {
     std::vector<int64_t> phoneme_durations;
