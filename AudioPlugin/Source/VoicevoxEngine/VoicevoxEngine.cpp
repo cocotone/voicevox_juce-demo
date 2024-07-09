@@ -185,10 +185,11 @@ VoicevoxEngineArtefact VoicevoxEngine::requestSync(const VoicevoxEngineRequest& 
         juce::Logger::outputDebugString(result.getErrorMessage());
     }
 
-    auto memory_wav = voicevoxClient->tts(request.speakerId, request.text);
-    if (memory_wav.has_value())
+    auto wav_format_byte_array_optional = voicevoxClient->tts(request.speakerId, request.text);
+    if (wav_format_byte_array_optional.has_value())
     {
-        artefact.wavBinary = std::move(memory_wav.value());
+        const auto& wav_format_byte_array = wav_format_byte_array_optional.value();
+        artefact.wavBinary = std::move(juce::MemoryBlock(wav_format_byte_array.data(), wav_format_byte_array.size()));
     }
 
     return artefact;

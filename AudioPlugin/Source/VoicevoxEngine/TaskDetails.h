@@ -44,10 +44,11 @@ public:
 
         if (request.processType == VoicevoxEngineProcessType::kTalk)
         {
-            auto memory_wav = clientPtr.lock()->tts(request.speakerId, request.text);
-            if (memory_wav.has_value())
+            auto wav_format_byte_array_optional = clientPtr.lock()->tts(request.speakerId, request.text);
+            if (wav_format_byte_array_optional.has_value())
             {
-                artefact.wavBinary = std::move(memory_wav.value());
+                const auto& wav_format_byte_array = wav_format_byte_array_optional.value();
+                artefact.wavBinary = std::move(juce::MemoryBlock(wav_format_byte_array.data(), wav_format_byte_array.size()));
             }
         }
         else if (request.processType == VoicevoxEngineProcessType::kHumming)
@@ -68,7 +69,7 @@ public:
                 }
 
                 const auto low_level_score = cctn::ScoreJsonConverter::convertToLowLevelScore(*clientPtr.lock().get(), request.scoreJson);
-                sf_decode_source = cctn::ScoreJsonConverter::convertToSfDecodeSource(low_level_score);
+                sf_decode_source = cctn::ScoreJsonConverter::convertToSfDecodeSource(low_level_score.value());
 
                 sample_rate_request = clientPtr.lock()->getSampleRate();
             }

@@ -69,7 +69,7 @@ std::vector<int64_t> calculatePhonemeLengthVector(const std::vector<int64_t>& co
 }
 
 //==============================================================================
-cctn::VoicevoxEngineLowLevelScore ScoreJsonConverter::convertToLowLevelScore(voicevox::VoicevoxClient& voicevoxClient, const juce::String& scoreJson)
+std::optional<cctn::VoicevoxEngineLowLevelScore> ScoreJsonConverter::convertToLowLevelScore(voicevox::VoicevoxClient& voicevoxClient, const juce::String& scoreJson)
 {
     SharedStaticPhonemes static_phonemes;
 
