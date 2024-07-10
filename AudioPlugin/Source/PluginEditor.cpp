@@ -117,8 +117,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         };
     addAndMakeVisible(buttonInvokeHumming.get());
 
-
-    musicView = std::make_unique<MusicView>(processorRef.getAudioTransportSource(), processorRef.getAudioThumbnail());
+    musicView = std::make_unique<MusicView>(processorRef, processorRef.getApplicationState(), processorRef.getAudioTransportSource(), processorRef.getAudioThumbnail());
     addAndMakeVisible(musicView.get());
 
     playerController = std::make_unique<PlayerController>(processorRef.getApplicationState());

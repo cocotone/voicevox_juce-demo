@@ -124,6 +124,8 @@ void PlayerController::valueTreePropertyChanged(juce::ValueTree& treeWhoseProper
             valueIsSyncToHost.forceUpdateOfCachedValue();
             syncToHostButton->setToggleState(valueIsSyncToHost.get(), juce::dontSendNotification);
         }
+
+        updateView();
     }
 }
 
@@ -131,7 +133,15 @@ void PlayerController::valueTreePropertyChanged(juce::ValueTree& treeWhoseProper
 void PlayerController::updateView()
 {
     playButton->setEnabled(valueCanPlay.get());
+    loopButton->setEnabled(valueCanPlay.get());
+
     playButton->setToggleState(valueIsPlaying.get(), juce::dontSendNotification);
     loopButton->setToggleState(valueIsLooping.get(), juce::dontSendNotification);
     syncToHostButton->setToggleState(valueIsSyncToHost.get(), juce::dontSendNotification);
+
+    if (valueIsSyncToHost.get())
+    {
+        playButton->setEnabled(false);
+        loopButton->setEnabled(false);
+    }
 }

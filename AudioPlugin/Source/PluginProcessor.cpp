@@ -139,6 +139,12 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     editorState.setProperty("VoicevoxEngine_HasSpeakerIdUpdated", juce::var(true), nullptr);
     
     juce::Logger::outputDebugString(this->getMetaJsonStringify());
+
+    if (hostSyncAudioSouce.get() != nullptr)
+    {
+        hostSyncAudioSouce->resamplerForChannelL->reset();
+        hostSyncAudioSouce->resamplerForChannelR->reset();
+    }
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -178,81 +184,97 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 {
     juce::ignoreUnused (midiMessages);
 
-    // Now ask the host for the current time so we can store it to be displayed later...
-    updateCurrentTimeInfoFromHost();
+    const auto current_host_poisition_info =
+        [&] 
+        {
+            if (const auto* play_head = getPlayHead())
+            {
+                if (const auto result = play_head->getPosition())
+                {
+                    return result.orFallback(juce::AudioPlayHead::PositionInfo{});
+                }
+            }
+
+            // If the host fails to provide the current time, we'll just use default values
+            return juce::AudioPlayHead::PositionInfo{};
+        }();
 
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
+    // SECTION: Clear unused bus audio buffer.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+    {
         buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ..do something to the data...
     }
 
-    for (const juce::MidiMessageMetadata metadata : midiMessages)
+    // SECTION: Audio rendering.
+    if (isSyncToHostTransport)
     {
-        const auto message = metadata.getMessage();
-        if (message.isNoteOn() && message.getNoteNumber() == 60)
+        // SECTION: Synchronization to plugin host
+        if (hostSyncAudioSouce.get() != nullptr)
         {
-            audioTransportSource->start();
+            juce::AudioBuffer<float> audio_buffer_resampler_retriver;
+            audio_buffer_resampler_retriver.makeCopyOf(buffer);
+
+            if (current_host_poisition_info.getIsPlaying())
+            {
+                const double position_seconds_in_host = current_host_poisition_info.getTimeInSeconds().orFallback(0.0);
+                const double sample_rate_audio_source = hostSyncAudioSouce->sampleRateAudioSource;
+                const juce::int64 next_read_position = position_seconds_in_host * sample_rate_audio_source;
+                hostSyncAudioSouce->memoryAudioSource->setNextReadPosition(next_read_position);
+
+                const double sr_ratio_from_source_to_device = sample_rate_audio_source / this->getSampleRate();
+                const int num_samples_to_device = buffer.getNumSamples();
+                const int num_samples_from_source = num_samples_to_device * sr_ratio_from_source_to_device;
+
+                juce::AudioBuffer<float> audio_buffer_source_retriver;
+                audio_buffer_source_retriver.setSize(2, num_samples_from_source);
+                audio_buffer_source_retriver.clear();
+
+                juce::AudioSourceChannelInfo audio_source_retriever(audio_buffer_source_retriver);
+                hostSyncAudioSouce->memoryAudioSource->getNextAudioBlock(audio_source_retriever);
+
+                hostSyncAudioSouce->resamplerForChannelL->process(
+                    sr_ratio_from_source_to_device,
+                    audio_source_retriever.buffer->getReadPointer(0),
+                    audio_buffer_resampler_retriver.getWritePointer(0),
+                    audio_buffer_resampler_retriver.getNumSamples(),
+                    audio_source_retriever.buffer->getNumSamples(),
+                    64);
+
+                hostSyncAudioSouce->resamplerForChannelR->process(
+                    sr_ratio_from_source_to_device,
+                    audio_source_retriever.buffer->getReadPointer(1),
+                    audio_buffer_resampler_retriver.getWritePointer(1),
+                    audio_buffer_resampler_retriver.getNumSamples(),
+                    audio_source_retriever.buffer->getNumSamples(),
+                    64);
+            }
+
+            buffer.copyFrom(0, 0, audio_buffer_resampler_retriver.getReadPointer(0), audio_buffer_resampler_retriver.getNumSamples());
+            buffer.copyFrom(1, 0, audio_buffer_resampler_retriver.getReadPointer(1), audio_buffer_resampler_retriver.getNumSamples());
         }
     }
-
-    // SECTION: Synchronization to plugin host.
+    else
     {
-        const auto host_position_info = lastPositionInfo.get();
-
-        if (isSyncToHostTransport)
+        // SECTION: Not synchronization to plugin host
+        for (const juce::MidiMessageMetadata metadata : midiMessages)
         {
-            if (host_position_info.getIsPlaying())
+            const auto message = metadata.getMessage();
+            if (message.isNoteOn() && message.getNoteNumber() == 60)
             {
-                if (!audioTransportSource->isPlaying())
-                {
-                    audioTransportSource->start();
-                }
-            }
-            else
-            {
-                if (audioTransportSource->isPlaying())
-                {
-                    audioTransportSource->stop();
-                }
-            }
-
-            if (audioTransportSource->isPlaying())
-            {
-#if 0
-                const auto host_time = host_position_info.getTimeInSeconds().orFallback(0.0);
-                const auto play_time = host_time - playTriggeredPositionInfo.getTimeInSeconds().orFallback(0.0);
-#else
-                const auto host_time = host_position_info.getTimeInSeconds().orFallback(0.0);
-                const auto play_time = host_time;
-#endif
-                audioTransportSource->setPosition(play_time);
+                audioTransportSource->start();
             }
         }
+
+        juce::AudioSourceChannelInfo buffer_info(buffer);
+        audioTransportSource->getNextAudioBlock(buffer_info);
     }
 
-    juce::AudioSourceChannelInfo buffer_info(buffer);
-    audioTransportSource->getNextAudioBlock(buffer_info);
+    // Now ask the host for the current time so we can store it to be displayed later...
+    updateCurrentTimeInfoFromHost();
 }
 
 //==============================================================================
@@ -377,6 +399,16 @@ void AudioPluginAudioProcessor::loadVoicevoxEngineAudioBufferInfo(const cctn::Au
     stereonized_buffer.copyFrom(1, 0, audioBufferInfo.audioBuffer.getReadPointer(0), audioBufferInfo.audioBuffer.getNumSamples());
 
     memoryAudioSource = std::make_unique<juce::MemoryAudioSource>(stereonized_buffer, true, false);
+
+    {
+        hostSyncAudioSouce = std::make_unique<HostSyncAudioSource>();
+        hostSyncAudioSouce->memoryAudioSource = std::make_unique<juce::MemoryAudioSource>(stereonized_buffer, true, false);
+        hostSyncAudioSouce->sampleRateAudioSource = audioBufferInfo.sampleRate;
+        hostSyncAudioSouce->resamplerForChannelL = std::make_unique<juce::LagrangeInterpolator>();
+        hostSyncAudioSouce->resamplerForChannelL->reset();
+        hostSyncAudioSouce->resamplerForChannelR = std::make_unique<juce::LagrangeInterpolator>();
+        hostSyncAudioSouce->resamplerForChannelR->reset();
+    }
 
     audioTransportSource->setSource(memoryAudioSource.get(),
         32768,
@@ -508,6 +540,19 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
 juce::String AudioPluginAudioProcessor::getMetaJsonStringify()
 {
     return juce::JSON::toString(voicevoxEngine->getMetaJson());
+}
+
+double AudioPluginAudioProcessor::getHostSyncAudioSourceLengthInSeconds() const
+{
+    if (hostSyncAudioSouce.get() != nullptr)
+    {
+        if (hostSyncAudioSouce->sampleRateAudioSource != 0.0)
+        {
+            return hostSyncAudioSouce->memoryAudioSource->getTotalLength() / hostSyncAudioSouce->sampleRateAudioSource;
+        }
+    }
+
+    return 0.0;
 }
 
 //==============================================================================

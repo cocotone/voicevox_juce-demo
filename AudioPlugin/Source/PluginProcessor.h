@@ -74,6 +74,7 @@ public:
 
     //==============================================================================
     const juce::AudioPlayHead::PositionInfo getLastPositionInfo() const { return lastPositionInfo.get(); }
+    double getHostSyncAudioSourceLengthInSeconds() const;
 
 private:
     //==============================================================================
@@ -93,6 +94,18 @@ private:
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     std::unique_ptr<juce::MemoryAudioSource> memoryAudioSource;
     std::unique_ptr<juce::AudioTransportSource> audioTransportSource;
+
+    struct HostSyncAudioSource
+    {
+        std::unique_ptr<juce::MemoryAudioSource> memoryAudioSource { nullptr };
+        double sampleRateAudioSource { 0.0 };
+
+        std::unique_ptr<juce::LagrangeInterpolator> resamplerForChannelL{ nullptr };
+        std::unique_ptr<juce::LagrangeInterpolator> resamplerForChannelR{ nullptr };
+
+        JUCE_LEAK_DETECTOR(HostSyncAudioSource)
+    };
+    std::unique_ptr<HostSyncAudioSource> hostSyncAudioSouce;
 
     juce::AudioThumbnailCache audioThumbnailCache{ 5 };
     std::unique_ptr<juce::AudioThumbnail> audioThumbnail;

@@ -21,7 +21,7 @@ private:
     void resized() override;
 
     // juce::ValueTree::Listener
-    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId);
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId) override;
 
     void updateView();
 

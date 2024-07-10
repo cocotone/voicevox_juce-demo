@@ -4,16 +4,20 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 //==============================================================================
+class AudioPluginAudioProcessor;
+
+//==============================================================================
 // MusicView
 //==============================================================================
 class MusicView final
     : public juce::Component
     , private juce::ChangeListener
+    , private juce::ValueTree::Listener
     , private juce::Timer
 {
 public:
     //==============================================================================
-    MusicView(juce::AudioTransportSource& transportSource, juce::AudioThumbnail& audioThumbnail);
+    explicit MusicView(AudioPluginAudioProcessor& processor, juce::ValueTree& appState, juce::AudioTransportSource& transportSource, juce::AudioThumbnail& audioThumbnail);
     ~MusicView() override;
 
 private:
@@ -31,6 +35,9 @@ private:
     // juce::ChangeListener
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
+    // juce::ValueTree::Listener
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId) override;
+
     // juce::Timer
     void timerCallback() override;
 
@@ -45,6 +52,10 @@ private:
     juce::AudioThumbnail& audioThumbnailRef;
 
     juce::DrawableRectangle currentPositionMarker;
+
+    const AudioPluginAudioProcessor& processorRef;
+    juce::ValueTree applicationState;
+    juce::CachedValue<bool> valueIsSyncToHost;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MusicView)
 };
