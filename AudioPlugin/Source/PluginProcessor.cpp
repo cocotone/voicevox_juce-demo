@@ -239,8 +239,13 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
             if (audioTransportSource->isPlaying())
             {
+#if 0
                 const auto host_time = host_position_info.getTimeInSeconds().orFallback(0.0);
                 const auto play_time = host_time - playTriggeredPositionInfo.getTimeInSeconds().orFallback(0.0);
+#else
+                const auto host_time = host_position_info.getTimeInSeconds().orFallback(0.0);
+                const auto play_time = host_time;
+#endif
                 audioTransportSource->setPosition(play_time);
             }
         }
