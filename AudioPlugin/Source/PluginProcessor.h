@@ -98,8 +98,9 @@ private:
     struct HostSyncAudioSource
     {
         std::unique_ptr<juce::MemoryAudioSource> memoryAudioSource { nullptr };
-        std::unique_ptr<juce::ResamplingAudioSource> resamplingAudioSource;
+        std::unique_ptr<juce::ResamplingAudioSource> resamplingAudioSource { nullptr };
         double sampleRateAudioSource { 0.0 };
+        juce::int64 estimatedNextReadSamplePosition { 0 };
 
         JUCE_LEAK_DETECTOR(HostSyncAudioSource)
     };
