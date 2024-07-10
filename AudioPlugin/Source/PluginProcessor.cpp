@@ -142,8 +142,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
 
     if (hostSyncAudioSouce.get() != nullptr)
     {
-        hostSyncAudioSouce->resamplerForChannelL->reset();
-        hostSyncAudioSouce->resamplerForChannelR->reset();
+        hostSyncAudioSouce->resamplingAudioSource->prepareToPlay(samplesPerBlock, sampleRate);
+        hostSyncAudioSouce->resamplingAudioSource->flushBuffers();
     }
 }
 
@@ -217,6 +217,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         {
             juce::AudioBuffer<float> audio_buffer_resampler_retriver;
             audio_buffer_resampler_retriver.makeCopyOf(buffer);
+            audio_buffer_resampler_retriver.clear();
 
             if (current_host_poisition_info.getIsPlaying())
             {
@@ -225,32 +226,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 const juce::int64 next_read_position = position_seconds_in_host * sample_rate_audio_source;
                 hostSyncAudioSouce->memoryAudioSource->setNextReadPosition(next_read_position);
 
-                const double sr_ratio_from_source_to_device = sample_rate_audio_source / this->getSampleRate();
-                const int num_samples_to_device = buffer.getNumSamples();
-                const int num_samples_from_source = num_samples_to_device * sr_ratio_from_source_to_device;
-
-                juce::AudioBuffer<float> audio_buffer_source_retriver;
-                audio_buffer_source_retriver.setSize(2, num_samples_from_source);
-                audio_buffer_source_retriver.clear();
-
-                juce::AudioSourceChannelInfo audio_source_retriever(audio_buffer_source_retriver);
-                hostSyncAudioSouce->memoryAudioSource->getNextAudioBlock(audio_source_retriever);
-
-                hostSyncAudioSouce->resamplerForChannelL->process(
-                    sr_ratio_from_source_to_device,
-                    audio_source_retriever.buffer->getReadPointer(0),
-                    audio_buffer_resampler_retriver.getWritePointer(0),
-                    audio_buffer_resampler_retriver.getNumSamples(),
-                    audio_source_retriever.buffer->getNumSamples(),
-                    64);
-
-                hostSyncAudioSouce->resamplerForChannelR->process(
-                    sr_ratio_from_source_to_device,
-                    audio_source_retriever.buffer->getReadPointer(1),
-                    audio_buffer_resampler_retriver.getWritePointer(1),
-                    audio_buffer_resampler_retriver.getNumSamples(),
-                    audio_source_retriever.buffer->getNumSamples(),
-                    64);
+                juce::AudioSourceChannelInfo audio_source_retriever(audio_buffer_resampler_retriver);
+                hostSyncAudioSouce->resamplingAudioSource->getNextAudioBlock(audio_source_retriever);
             }
 
             buffer.copyFrom(0, 0, audio_buffer_resampler_retriver.getReadPointer(0), audio_buffer_resampler_retriver.getNumSamples());
@@ -404,10 +381,10 @@ void AudioPluginAudioProcessor::loadVoicevoxEngineAudioBufferInfo(const cctn::Au
         hostSyncAudioSouce = std::make_unique<HostSyncAudioSource>();
         hostSyncAudioSouce->memoryAudioSource = std::make_unique<juce::MemoryAudioSource>(stereonized_buffer, true, false);
         hostSyncAudioSouce->sampleRateAudioSource = audioBufferInfo.sampleRate;
-        hostSyncAudioSouce->resamplerForChannelL = std::make_unique<juce::LagrangeInterpolator>();
-        hostSyncAudioSouce->resamplerForChannelL->reset();
-        hostSyncAudioSouce->resamplerForChannelR = std::make_unique<juce::LagrangeInterpolator>();
-        hostSyncAudioSouce->resamplerForChannelR->reset();
+        hostSyncAudioSouce->resamplingAudioSource =
+            std::make_unique<juce::ResamplingAudioSource>(hostSyncAudioSouce->memoryAudioSource.get(), false, 2);
+        hostSyncAudioSouce->resamplingAudioSource->prepareToPlay(getBlockSize(), getSampleRate());
+        hostSyncAudioSouce->resamplingAudioSource->setResamplingRatio(audioBufferInfo.sampleRate / getSampleRate());
     }
 
     audioTransportSource->setSource(memoryAudioSource.get(),
