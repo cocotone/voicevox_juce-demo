@@ -10,6 +10,7 @@
 class AudioPluginAudioProcessorEditor final
     : public juce::AudioProcessorEditor
     , private juce::ValueTree::Listener
+    , private juce::Timer
 {
 public:
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
@@ -21,10 +22,14 @@ public:
 
 private:
     //==============================================================================
-    virtual void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property);
+    virtual void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
+
+    //==============================================================================
+    virtual void timerCallback() override;
 
     //==============================================================================
     void updateView(bool isInitial);
+    void updateTimecodeDisplay (const juce::AudioPlayHead::PositionInfo& positionInfo);
 
     //==============================================================================
     AudioPluginAudioProcessor& processorRef;
@@ -46,6 +51,7 @@ private:
 
     std::unique_ptr<MusicView> musicView;
     std::unique_ptr<PlayerController> playerController;
+    std::unique_ptr<juce::Label> labelTimecodeDisplay;
 
     std::unique_ptr<ProgressPanel> progressPanel;
     juce::CachedValue<bool> valueIsVoicevoxEngineTaskRunning;

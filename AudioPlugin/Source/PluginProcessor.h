@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <voicevox_juce_extra/voicevox_juce_extra.h>
+#include "SpinLockedPositionInfo.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final
@@ -71,6 +72,9 @@ public:
     const juce::StringArray& getVoicevoxHummingSpeakerList() const { return voicevoxHummingSpeakerIdentifierList; };
     const std::map<juce::String, juce::uint32>& getVoicevoxSpeakerMap() const { return voicevoxMapSpeakerIdentifierToSpeakerId; };
 
+    //==============================================================================
+    const juce::AudioPlayHead::PositionInfo getLastPositionInfo() const { return lastPositionInfo.get(); }
+
 private:
     //==============================================================================
     // juce::ChangeListener
@@ -78,6 +82,9 @@ private:
 
     // juce::ValueTree::Listener
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId) override;
+
+    //==============================================================================
+    void updateCurrentTimeInfoFromHost();
 
     //==============================================================================
     // Audio
@@ -90,6 +97,9 @@ private:
     juce::AudioThumbnailCache audioThumbnailCache{ 5 };
     std::unique_ptr<juce::AudioThumbnail> audioThumbnail;
     juce::AudioBuffer<float> audioBufferForThumbnail;
+
+    SpinLockedPositionInfo lastPositionInfo;
+    juce::AudioPlayHead::PositionInfo playTriggeredPositionInfo;
 
     std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
 

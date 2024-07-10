@@ -57,7 +57,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     textEditor = std::make_unique<juce::TextEditor>();
     textEditor->setMultiLine(true);
-    textEditor->setFont(textEditor->getFont().withPointHeight(20));
+    textEditor->setFont(textEditor->getFont().withPointHeight(15));
     addAndMakeVisible(textEditor.get());
     comboboxTalkSpeakerChoice = std::make_unique<juce::ComboBox>();
     comboboxTalkSpeakerChoice->onChange =
@@ -124,6 +124,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     playerController = std::make_unique<PlayerController>(processorRef.getApplicationState());
     addAndMakeVisible(playerController.get());
 
+    labelTimecodeDisplay = std::make_unique<juce::Label>();
+    labelTimecodeDisplay->setFont(juce::FontOptions(juce::Font::getDefaultMonospacedFontName(), 15.0f, juce::Font::plain));
+    addAndMakeVisible(labelTimecodeDisplay.get());
+
     progressPanel = std::make_unique<ProgressPanel>();
     addChildComponent(progressPanel.get());
 
@@ -138,11 +142,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Initial update
     updateView(true);
 
-    setSize (800, 640);
+    setSize (640, 800);
+
+    startTimerHz(30);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    stopTimer();
+
     processorRef.getEditorState().removeListener(this);
 
     jsonTreeView->setRootItem(nullptr);
@@ -160,7 +168,7 @@ void AudioPluginAudioProcessorEditor::resized()
     auto rect_area = getLocalBounds();
 
     {
-        auto bottom_pane = rect_area.removeFromBottom(200);
+        auto bottom_pane = rect_area.removeFromBottom(260);
         auto property_pane = rect_area;
         auto progress_area = property_pane;
 
@@ -188,6 +196,7 @@ void AudioPluginAudioProcessorEditor::resized()
         }
         textEditor->setBounds(property_pane.reduced(8));
 
+        labelTimecodeDisplay->setBounds(bottom_pane.removeFromBottom(60).reduced(8));
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));
 
@@ -196,6 +205,7 @@ void AudioPluginAudioProcessorEditor::resized()
     repaint();
 }
 
+//==============================================================================
 void AudioPluginAudioProcessorEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId)
 {
     bool should_update_view = false;
@@ -240,6 +250,12 @@ void AudioPluginAudioProcessorEditor::valueTreePropertyChanged(juce::ValueTree& 
     }
 }
 
+void AudioPluginAudioProcessorEditor::timerCallback()
+{
+    updateTimecodeDisplay(processorRef.getLastPositionInfo());
+}
+
+//==============================================================================
 void AudioPluginAudioProcessorEditor::updateView(bool isInitial)
 {
     progressPanel->setVisible(valueIsVoicevoxEngineTaskRunning);
@@ -262,4 +278,60 @@ void AudioPluginAudioProcessorEditor::updateView(bool isInitial)
             comboboxHummingSpeakerChoice->setText(last_combo_text);
         }
     }
+}
+
+ //==============================================================================
+// quick-and-dirty function to format a timecode string
+juce::String timeToTimecodeString (double seconds)
+{
+    auto millisecs = juce::roundToInt (seconds * 1000.0);
+    auto absMillisecs = std::abs (millisecs);
+
+    return juce::String::formatted ("%02d:%02d:%02d.%03d",
+                                millisecs / 3600000,
+                                (absMillisecs / 60000) % 60,
+                                (absMillisecs / 1000)  % 60,
+                                absMillisecs % 1000);
+}
+
+// quick-and-dirty function to format a bars/beats string
+juce::String quarterNotePositionToBarsBeatsString (double quarterNotes, juce::AudioPlayHead::TimeSignature timeSignature)
+{
+    if (timeSignature.numerator == 0 || timeSignature.denominator == 0)
+    {
+        return "1|1|000";
+    }
+
+    auto quarterNotesPerBar = (timeSignature.numerator * 4 / timeSignature.denominator);
+    auto beats  = (fmod (quarterNotes, quarterNotesPerBar) / quarterNotesPerBar) * timeSignature.numerator;
+
+    auto bar    = ((int) quarterNotes) / quarterNotesPerBar + 1;
+    auto beat   = ((int) beats) + 1;
+    auto ticks  = ((int) (fmod (beats, 1.0) * 960.0 + 0.5));
+
+    return juce::String::formatted ("%d|%d|%03d", bar, beat, ticks);
+}
+
+// Updates the text in our position label.
+void AudioPluginAudioProcessorEditor::updateTimecodeDisplay (const juce::AudioPlayHead::PositionInfo& positionInfo)
+{
+    juce::MemoryOutputStream displayText;
+
+    const auto timeSignature = positionInfo.getTimeSignature().orFallback (juce::AudioPlayHead::TimeSignature{});
+
+    displayText << juce::String (positionInfo.getBpm().orFallback (120.0), 2) << " bpm, "
+                << timeSignature.numerator << '/' << timeSignature.denominator
+                << "  -  " << timeToTimecodeString (positionInfo.getTimeInSeconds().orFallback (0.0))
+                << "  -  " << quarterNotePositionToBarsBeatsString (positionInfo.getPpqPosition().orFallback (0.0), timeSignature);
+
+    if (positionInfo.getIsRecording())
+    {
+        displayText << "  (recording)";
+    }
+    else if (positionInfo.getIsPlaying())
+    {
+        displayText << "  (playing)";
+    }
+
+    labelTimecodeDisplay->setText (displayText.toString(), juce::dontSendNotification);
 }

@@ -175,6 +175,9 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 {
     juce::ignoreUnused (midiMessages);
 
+    // Now ask the host for the current time so we can store it to be displayed later...
+    updateCurrentTimeInfoFromHost();
+
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -208,6 +211,13 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         {
             audioTransportSource->start();
         }
+    }
+
+    if (audioTransportSource->isPlaying())
+    {
+        const auto host_time = lastPositionInfo.get().getTimeInSeconds().orFallback(0.0);
+        const auto play_time = host_time - playTriggeredPositionInfo.getTimeInSeconds().orFallback(0.0);
+        audioTransportSource->setPosition(play_time);
     }
 
     juce::AudioSourceChannelInfo buffer_info(buffer);
@@ -503,6 +513,9 @@ void AudioPluginAudioProcessor::valueTreePropertyChanged(juce::ValueTree& treeWh
             if (should_play)
             {
                 audioTransportSource->start();
+
+                // Set triggered position.
+                playTriggeredPositionInfo = getLastPositionInfo();
             }
             else
             {
@@ -510,6 +523,26 @@ void AudioPluginAudioProcessor::valueTreePropertyChanged(juce::ValueTree& treeWh
             }
         }
     }
+}
+
+//==============================================================================
+void AudioPluginAudioProcessor::updateCurrentTimeInfoFromHost()
+{
+    const auto newInfo = [&]
+        {
+            if (const auto* play_head = getPlayHead())
+            {
+                if (const auto result = play_head->getPosition())
+                {
+                    return result.orFallback(juce::AudioPlayHead::PositionInfo{});
+                }
+            }
+
+            // If the host fails to provide the current time, we'll just use default values
+            return juce::AudioPlayHead::PositionInfo{};
+        }();
+
+    lastPositionInfo.set(newInfo);
 }
 
 //==============================================================================
