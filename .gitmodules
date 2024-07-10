@@ -4,3 +4,6 @@
 [submodule "voicevox_juce"]
 	path = voicevox_juce
 	url = https://github.com/cocotone/voicevox_juce.git
+[submodule "voicevox_juce_extra"]
+	path = voicevox_juce_extra
+	url = https://github.com/cocotone/voicevox_juce_extra.git
