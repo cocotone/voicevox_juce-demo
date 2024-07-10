@@ -104,12 +104,14 @@ private:
     std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
 
     // State
-    juce::ValueTree applicationState{ "ApplicationState", {} };
+    juce::ValueTree applicationState;
     juce::ValueTree editorState;
 
     juce::StringArray voicevoxTalkSpeakerIdentifierList;
     juce::StringArray voicevoxHummingSpeakerIdentifierList;
     std::map<juce::String, juce::uint32> voicevoxMapSpeakerIdentifierToSpeakerId;
+
+    std::atomic<bool> isSyncToHostTransport;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

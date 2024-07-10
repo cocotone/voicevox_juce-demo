@@ -39,6 +39,19 @@ PlayerController::PlayerController(juce::ValueTree& appState)
         };
     addAndMakeVisible(loopButton.get());
 
+    syncToHostButton = std::make_unique<juce::ToggleButton>();
+    syncToHostButton->setButtonText("Sync To Host");
+    syncToHostButton->onClick =
+        [safe_this = juce::Component::SafePointer(this)]() {
+        if (safe_this.getComponent() == nullptr)
+        {
+            return;
+        }
+
+        safe_this->valueIsSyncToHost = !safe_this->valueIsSyncToHost.get();
+        };
+    addAndMakeVisible(syncToHostButton.get());
+
     applicationState.addListener(this);
 
     valueCanPlay.referTo(applicationState, "Player_CanPlay", nullptr);
@@ -49,6 +62,9 @@ PlayerController::PlayerController(juce::ValueTree& appState)
 
     valueIsLooping.referTo(applicationState, "Player_IsLooping", nullptr);
     valueIsLooping.forceUpdateOfCachedValue();
+
+    valueIsSyncToHost.referTo(applicationState, "Player_IsSyncToHostTransport", nullptr);
+    valueIsSyncToHost.forceUpdateOfCachedValue();
 
     // Initial update
     updateView();
@@ -72,13 +88,14 @@ void PlayerController::resized()
     groupPlayerController->setBounds(area.reduced(8));
 
     {
-        auto rect_player_controller = groupPlayerController->getBounds().reduced(8);
+        auto rect_player_controller = groupPlayerController->getBounds().withTrimmedTop(8).reduced(8);
         const auto width = rect_player_controller.getWidth();
-        const auto height = rect_player_controller.getHeight() / 2;
+        const auto height = rect_player_controller.getHeight() / 3;
         const auto width_button = width;
-        const auto height_button = 60;
+        const auto height_button = height;
         playButton->setBounds(rect_player_controller.removeFromTop(height).withSizeKeepingCentre(width_button, height_button).reduced(8));
         loopButton->setBounds(rect_player_controller.removeFromTop(height).withSizeKeepingCentre(width_button, height_button).reduced(8));
+        syncToHostButton->setBounds(rect_player_controller.removeFromTop(height).withSizeKeepingCentre(width_button, height_button).reduced(8));
     }
 }
 
@@ -102,6 +119,11 @@ void PlayerController::valueTreePropertyChanged(juce::ValueTree& treeWhoseProper
             valueIsLooping.forceUpdateOfCachedValue();
             loopButton->setToggleState(valueIsLooping.get(), juce::dontSendNotification);
         }
+        else if (propertyId.toString() == "Player_IsSyncToHostTransport")
+        {
+            valueIsSyncToHost.forceUpdateOfCachedValue();
+            syncToHostButton->setToggleState(valueIsSyncToHost.get(), juce::dontSendNotification);
+        }
     }
 }
 
@@ -111,4 +133,5 @@ void PlayerController::updateView()
     playButton->setEnabled(valueCanPlay.get());
     playButton->setToggleState(valueIsPlaying.get(), juce::dontSendNotification);
     loopButton->setToggleState(valueIsLooping.get(), juce::dontSendNotification);
+    syncToHostButton->setToggleState(valueIsSyncToHost.get(), juce::dontSendNotification);
 }

@@ -12,11 +12,14 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                      #endif
                        )
     , editorState("editor_sate")
+    , applicationState("application_state")
+    , isSyncToHostTransport(false)
 {
     // Application state related.
     applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
     applicationState.setProperty("Player_IsPlaying", juce::var(false), nullptr);
     applicationState.setProperty("Player_IsLooping", juce::var(false), nullptr);
+    applicationState.setProperty("Player_IsSyncToHostTransport", juce::var(false), nullptr);
 
     applicationState.addListener(this);
 
@@ -213,11 +216,34 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         }
     }
 
-    if (audioTransportSource->isPlaying())
+    // SECTION: Synchronization to plugin host.
     {
-        const auto host_time = lastPositionInfo.get().getTimeInSeconds().orFallback(0.0);
-        const auto play_time = host_time - playTriggeredPositionInfo.getTimeInSeconds().orFallback(0.0);
-        audioTransportSource->setPosition(play_time);
+        const auto host_position_info = lastPositionInfo.get();
+
+        if (isSyncToHostTransport)
+        {
+            if (host_position_info.getIsPlaying())
+            {
+                if (!audioTransportSource->isPlaying())
+                {
+                    audioTransportSource->start();
+                }
+            }
+            else
+            {
+                if (audioTransportSource->isPlaying())
+                {
+                    audioTransportSource->stop();
+                }
+            }
+
+            if (audioTransportSource->isPlaying())
+            {
+                const auto host_time = host_position_info.getTimeInSeconds().orFallback(0.0);
+                const auto play_time = host_time - playTriggeredPositionInfo.getTimeInSeconds().orFallback(0.0);
+                audioTransportSource->setPosition(play_time);
+            }
+        }
     }
 
     juce::AudioSourceChannelInfo buffer_info(buffer);
@@ -508,19 +534,26 @@ void AudioPluginAudioProcessor::valueTreePropertyChanged(juce::ValueTree& treeWh
     {
         if (propertyId.toString() == "Player_IsPlaying")
         {
-            // Scoped listener detachment.
-            const bool should_play = (bool)applicationState.getProperty(propertyId);
-            if (should_play)
+            if (!isSyncToHostTransport)
             {
-                audioTransportSource->start();
+                // Scoped listener detachment.
+                const bool should_play = (bool)applicationState.getProperty(propertyId);
+                if (should_play)
+                {
+                    audioTransportSource->start();
 
-                // Set triggered position.
-                playTriggeredPositionInfo = getLastPositionInfo();
+                    // Set triggered position.
+                    playTriggeredPositionInfo = getLastPositionInfo();
+                }
+                else
+                {
+                    audioTransportSource->stop();
+                }
             }
-            else
-            {
-                audioTransportSource->stop();
-            }
+        }
+        else if (propertyId.toString() == "Player_IsSyncToHostTransport")
+        {
+            isSyncToHostTransport = (bool)applicationState.getProperty(propertyId);
         }
     }
 }
