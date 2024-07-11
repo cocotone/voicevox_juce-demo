@@ -94,26 +94,20 @@ private:
     std::unique_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource;
     std::unique_ptr<juce::MemoryAudioSource> memoryAudioSource;
     std::unique_ptr<juce::AudioTransportSource> audioTransportSource;
+    
+    // Host sync audio source player
+    std::unique_ptr<cctn::HostSyncAudioSourcePlayer> hostSyncAudioSourcePlayer;
 
-    struct HostSyncAudioSource
-    {
-        std::unique_ptr<juce::MemoryAudioSource> memoryAudioSource { nullptr };
-        std::unique_ptr<juce::ResamplingAudioSource> resamplingAudioSource { nullptr };
-        double sampleRateAudioSource { 0.0 };
-        juce::int64 estimatedNextReadSamplePosition { 0 };
-
-        JUCE_LEAK_DETECTOR(HostSyncAudioSource)
-    };
-    std::unique_ptr<HostSyncAudioSource> hostSyncAudioSouce;
-
-
+    // For audio buffer thumbnail
     juce::AudioThumbnailCache audioThumbnailCache{ 5 };
     std::unique_ptr<juce::AudioThumbnail> audioThumbnail;
     juce::AudioBuffer<float> audioBufferForThumbnail;
 
+    // Position info
     SpinLockedPositionInfo lastPositionInfo;
     juce::AudioPlayHead::PositionInfo playTriggeredPositionInfo;
 
+    // Voicevox Engine
     std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
 
     // State

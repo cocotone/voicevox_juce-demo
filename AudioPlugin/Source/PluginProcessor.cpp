@@ -41,6 +41,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     audioTransportSource = std::make_unique<juce::AudioTransportSource>();
 
+    hostSyncAudioSourcePlayer = std::make_unique<cctn::HostSyncAudioSourcePlayer>();
+
     audioThumbnail = std::make_unique<juce::AudioThumbnail>(512, *audioFormatManager.get(), audioThumbnailCache);
    
     voicevoxEngine = std::make_unique<cctn::VoicevoxEngine>();
@@ -140,11 +142,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     
     juce::Logger::outputDebugString(this->getMetaJsonStringify());
 
-    if (hostSyncAudioSouce.get() != nullptr)
-    {
-        hostSyncAudioSouce->resamplingAudioSource->prepareToPlay(samplesPerBlock, sampleRate);
-        hostSyncAudioSouce->resamplingAudioSource->flushBuffers();
-    }
+    hostSyncAudioSourcePlayer->prepareToPlay(samplesPerBlock, sampleRate);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -153,6 +151,8 @@ void AudioPluginAudioProcessor::releaseResources()
     voicevoxTalkSpeakerIdentifierList.clear();
     voicevoxHummingSpeakerIdentifierList.clear();
     voicevoxMapSpeakerIdentifierToSpeakerId.clear();
+
+    hostSyncAudioSourcePlayer->releaseResources();
 }
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -179,7 +179,7 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
   #endif
 }
 
-void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
+void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& audioBuffer,
                                               juce::MidiBuffer& midiMessages)
 {
     juce::ignoreUnused (midiMessages);
@@ -206,33 +206,13 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // SECTION: Clear unused bus audio buffer.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
     {
-        buffer.clear (i, 0, buffer.getNumSamples());
+        audioBuffer.clear (i, 0, audioBuffer.getNumSamples());
     }
 
     // SECTION: Audio rendering.
     if (isSyncToHostTransport)
     {
-        // SECTION: Synchronization to plugin host
-        if (hostSyncAudioSouce.get() != nullptr)
-        {
-            juce::AudioBuffer<float> audio_buffer_resampler_retriver;
-            audio_buffer_resampler_retriver.makeCopyOf(buffer);
-            audio_buffer_resampler_retriver.clear();
-
-            if (current_host_poisition_info.getIsPlaying())
-            {
-                const double position_seconds_in_host = current_host_poisition_info.getTimeInSeconds().orFallback(0.0);
-                const double sample_rate_audio_source = hostSyncAudioSouce->sampleRateAudioSource;
-                const juce::int64 next_read_position = position_seconds_in_host * sample_rate_audio_source;
-                hostSyncAudioSouce->memoryAudioSource->setNextReadPosition(next_read_position);
-
-                juce::AudioSourceChannelInfo audio_source_retriever(audio_buffer_resampler_retriver);
-                hostSyncAudioSouce->resamplingAudioSource->getNextAudioBlock(audio_source_retriever);
-            }
-
-            buffer.copyFrom(0, 0, audio_buffer_resampler_retriver.getReadPointer(0), audio_buffer_resampler_retriver.getNumSamples());
-            buffer.copyFrom(1, 0, audio_buffer_resampler_retriver.getReadPointer(1), audio_buffer_resampler_retriver.getNumSamples());
-        }
+        hostSyncAudioSourcePlayer->processBlockWithPositionInfo(audioBuffer, midiMessages, current_host_poisition_info);
     }
     else
     {
@@ -246,7 +226,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             }
         }
 
-        juce::AudioSourceChannelInfo buffer_info(buffer);
+        juce::AudioSourceChannelInfo buffer_info(audioBuffer);
         audioTransportSource->getNextAudioBlock(buffer_info);
     }
 
@@ -377,15 +357,7 @@ void AudioPluginAudioProcessor::loadVoicevoxEngineAudioBufferInfo(const cctn::Au
 
     memoryAudioSource = std::make_unique<juce::MemoryAudioSource>(stereonized_buffer, true, false);
 
-    {
-        hostSyncAudioSouce = std::make_unique<HostSyncAudioSource>();
-        hostSyncAudioSouce->memoryAudioSource = std::make_unique<juce::MemoryAudioSource>(stereonized_buffer, true, false);
-        hostSyncAudioSouce->sampleRateAudioSource = audioBufferInfo.sampleRate;
-        hostSyncAudioSouce->resamplingAudioSource =
-            std::make_unique<juce::ResamplingAudioSource>(hostSyncAudioSouce->memoryAudioSource.get(), false, 2);
-        hostSyncAudioSouce->resamplingAudioSource->prepareToPlay(getBlockSize(), getSampleRate());
-        hostSyncAudioSouce->resamplingAudioSource->setResamplingRatio(audioBufferInfo.sampleRate / getSampleRate());
-    }
+    hostSyncAudioSourcePlayer->setAudioBufferToPlay(stereonized_buffer, audioBufferInfo.sampleRate);
 
     audioTransportSource->setSource(memoryAudioSource.get(),
         32768,
@@ -519,17 +491,10 @@ juce::String AudioPluginAudioProcessor::getMetaJsonStringify()
     return juce::JSON::toString(voicevoxEngine->getMetaJson());
 }
 
+//==============================================================================
 double AudioPluginAudioProcessor::getHostSyncAudioSourceLengthInSeconds() const
 {
-    if (hostSyncAudioSouce.get() != nullptr)
-    {
-        if (hostSyncAudioSouce->sampleRateAudioSource != 0.0)
-        {
-            return hostSyncAudioSouce->memoryAudioSource->getTotalLength() / hostSyncAudioSouce->sampleRateAudioSource;
-        }
-    }
-
-    return 0.0;
+    return hostSyncAudioSourcePlayer->getTimeLengthInSeconds();
 }
 
 //==============================================================================

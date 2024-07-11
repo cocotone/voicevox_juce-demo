@@ -59,11 +59,21 @@ void MusicView::mouseDown(const juce::MouseEvent& e)
 
 void MusicView::mouseDrag(const juce::MouseEvent& e)
 {
+    if (valueIsSyncToHost.get())
+    {
+        return;
+    }
+
     transportSourceRef.setPosition(juce::jmax(0.0, xToTime((double)e.x, transportSourceRef.getLengthInSeconds())));
 }
 
 void MusicView::mouseUp(const juce::MouseEvent&)
 {
+    if (valueIsSyncToHost.get())
+    {
+        return;
+    }
+
     transportSourceRef.start();
 }
 
