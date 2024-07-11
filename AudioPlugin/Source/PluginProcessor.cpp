@@ -380,6 +380,8 @@ void AudioPluginAudioProcessor::clearAudioFileHandle()
     audioTransportSource->setSource(nullptr);
     audioFormatReaderSource.reset();
 
+    hostSyncAudioSourcePlayer->clearAudioBufferToPlay();
+
     // Update audio thumbnail
     audioDataForAudioThumbnail->sampleRate = 0.0;
     audioDataForAudioThumbnail->audioBuffer.clear();
