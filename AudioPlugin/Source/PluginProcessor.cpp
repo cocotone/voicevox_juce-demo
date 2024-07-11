@@ -44,6 +44,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     hostSyncAudioSourcePlayer = std::make_unique<cctn::HostSyncAudioSourcePlayer>();
 
     audioThumbnail = std::make_unique<juce::AudioThumbnail>(512, *audioFormatManager.get(), audioThumbnailCache);
+    audioDataForAudioThumbnail = std::make_unique<AudioDataForAudioThumbnail>();
+    audioDataForAudioThumbnail->audioBuffer.clear();
    
     voicevoxEngine = std::make_unique<cctn::VoicevoxEngine>();
 
@@ -265,7 +267,6 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
 void AudioPluginAudioProcessor::loadAudioFile(const juce::File& fileToLoad)
 {
     // Unload the previous file source and delete it..
-    audioThumbnail->clear();
     audioTransportSource->stop();
     audioTransportSource->setSource(nullptr);
     audioFormatReaderSource.reset();
@@ -283,12 +284,15 @@ void AudioPluginAudioProcessor::loadAudioFile(const juce::File& fileToLoad)
             2);
 
         // Update audio thumbnail
-        audioBufferForThumbnail.clear();
-        audioBufferForThumbnail.setSize(2, reader->lengthInSamples);
-        reader->read(&audioBufferForThumbnail, 0, reader->lengthInSamples, 0, true, true);
-
-        juce::Uuid uuid;
-        audioThumbnail->setSource(&audioBufferForThumbnail, reader->sampleRate, uuid.hash());
+        audioDataForAudioThumbnail->sampleRate = reader->sampleRate;
+        audioDataForAudioThumbnail->audioBuffer.clear();
+        audioDataForAudioThumbnail->audioBuffer.setSize(2, reader->lengthInSamples);
+        reader->read(&audioDataForAudioThumbnail->audioBuffer, 0, reader->lengthInSamples, 0, true, true);
+        
+        juce::MessageManager::callAsync(
+            [this] {
+                this->resetAudioThumbnail();
+            });
 
         // Update can play or not.
         if (audioTransportSource->getTotalLength() > 0)
@@ -305,7 +309,6 @@ void AudioPluginAudioProcessor::loadAudioFile(const juce::File& fileToLoad)
 void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputStream> audioFileStream)
 {
     // Unload the previous file source and delete it..
-    audioThumbnail->clear();
     audioTransportSource->stop();
     audioTransportSource->setSource(nullptr);
     audioFormatReaderSource.reset();
@@ -323,29 +326,22 @@ void AudioPluginAudioProcessor::loadAudioFileStream(std::unique_ptr<juce::InputS
             2);
 
         // Update audio thumbnail
-        audioBufferForThumbnail.clear();
-        audioBufferForThumbnail.setSize(2, reader->lengthInSamples);
-        reader->read(&audioBufferForThumbnail, 0, reader->lengthInSamples, 0, true, true);
+        audioDataForAudioThumbnail->sampleRate = reader->sampleRate;
+        audioDataForAudioThumbnail->audioBuffer.clear();
+        audioDataForAudioThumbnail->audioBuffer.setSize(2, reader->lengthInSamples);
+        reader->read(&audioDataForAudioThumbnail->audioBuffer, 0, reader->lengthInSamples, 0, true, true);
 
-        juce::Uuid uuid;
-        audioThumbnail->setSource(&audioBufferForThumbnail, reader->sampleRate, uuid.hash());
-
-        // Update can play or not.
-        if (audioTransportSource->getTotalLength() > 0)
-        {
-            applicationState.setProperty("Player_CanPlay", juce::var(true), nullptr);
-        }
-        else
-        {
-            applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
-        }
+        juce::MessageManager::callAsync(
+            [this] {
+                this->resetAudioThumbnail();
+                this->updatePlayerState();
+            });
     }
 }
 
 void AudioPluginAudioProcessor::loadVoicevoxEngineAudioBufferInfo(const cctn::AudioBufferInfo& audioBufferInfo)
 {
     // Unload the previous file source and delete it..
-    audioThumbnail->clear();
     audioTransportSource->stop();
     audioTransportSource->setSource(nullptr);
     memoryAudioSource.reset();
@@ -366,12 +362,45 @@ void AudioPluginAudioProcessor::loadVoicevoxEngineAudioBufferInfo(const cctn::Au
         2);
 
     // Update audio thumbnail
-    audioBufferForThumbnail.clear();
-    audioBufferForThumbnail.makeCopyOf(stereonized_buffer, false);
+    audioDataForAudioThumbnail->sampleRate = audioBufferInfo.sampleRate;
+    audioDataForAudioThumbnail->audioBuffer.clear();
+    audioDataForAudioThumbnail->audioBuffer.makeCopyOf(stereonized_buffer, false);
+
+    juce::MessageManager::callAsync(
+        [this] {
+            this->resetAudioThumbnail();
+            this->updatePlayerState();
+        });
+}
+
+void AudioPluginAudioProcessor::clearAudioFileHandle()
+{
+    // Unload the previous file source and delete it..
+    audioTransportSource->stop();
+    audioTransportSource->setSource(nullptr);
+    audioFormatReaderSource.reset();
+
+    // Update audio thumbnail
+    audioDataForAudioThumbnail->sampleRate = 0.0;
+    audioDataForAudioThumbnail->audioBuffer.clear();
+
+    juce::MessageManager::callAsync(
+        [this] {
+            this->resetAudioThumbnail();
+            this->updatePlayerState();
+        });
+}
+
+void AudioPluginAudioProcessor::resetAudioThumbnail()
+{
+    audioThumbnail->clear();
 
     juce::Uuid uuid;
-    audioThumbnail->setSource(&audioBufferForThumbnail, audioBufferInfo.sampleRate, uuid.hash());
+    audioThumbnail->setSource(&audioDataForAudioThumbnail->audioBuffer, audioDataForAudioThumbnail->sampleRate, uuid.hash());
+}
 
+void AudioPluginAudioProcessor::updatePlayerState()
+{
     // Update can play or not.
     if (audioTransportSource->getTotalLength() > 0)
     {
@@ -381,17 +410,6 @@ void AudioPluginAudioProcessor::loadVoicevoxEngineAudioBufferInfo(const cctn::Au
     {
         applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
     }
-}
-
-void AudioPluginAudioProcessor::clearAudioFileHandle()
-{
-    // Unload the previous file source and delete it..
-    audioThumbnail->clear();
-    audioTransportSource->stop();
-    audioTransportSource->setSource(nullptr);
-    audioFormatReaderSource.reset();
-
-    applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
 }
 
 //==============================================================================
@@ -428,19 +446,19 @@ void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const
 
             if (artefact.wavBinary.has_value())
             {
-                juce::MessageManager::callAsync(
-                    [this, wav_binary = artefact.wavBinary.value()] {
-                        this->loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(wav_binary, true));
+                this->loadAudioFileStream(std::make_unique<juce::MemoryInputStream>(artefact.wavBinary.value(), true));
 
+                juce::MessageManager::callAsync(
+                    [this] {
                         editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
                     });
             }
             else
             {
+                this->clearAudioFileHandle();
+
                 juce::MessageManager::callAsync(
                     [this] {
-                        this->clearAudioFileHandle();
-
                         editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
                     });
             }
@@ -465,19 +483,19 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
 
             if (artefact.audioBufferInfo.has_value())
             {
-                juce::MessageManager::callAsync(
-                    [this, audio_buffer_info = artefact.audioBufferInfo.value()] {
-                        this->loadVoicevoxEngineAudioBufferInfo(audio_buffer_info);
+                this->loadVoicevoxEngineAudioBufferInfo(artefact.audioBufferInfo.value());
 
+                juce::MessageManager::callAsync(
+                    [this] {
                         editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
                     });
             }
             else
             {
+                this->clearAudioFileHandle();
+                
                 juce::MessageManager::callAsync(
                     [this] {
-                        this->clearAudioFileHandle();
-
                         editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(false), nullptr);
                     });
             }

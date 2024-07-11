@@ -54,6 +54,10 @@ public:
     void loadVoicevoxEngineAudioBufferInfo(const cctn::AudioBufferInfo& audioBufferInfo);
     void clearAudioFileHandle();
 
+    // Should call on juce::MessageThread
+    void resetAudioThumbnail();
+    void updatePlayerState();
+
     //==============================================================================
     void requestSynthesis(juce::int64 speakerId, const juce::String& text);
     void requestTextToSpeech(juce::int64 speakerId, const juce::String& text);
@@ -101,7 +105,14 @@ private:
     // For audio buffer thumbnail
     juce::AudioThumbnailCache audioThumbnailCache{ 5 };
     std::unique_ptr<juce::AudioThumbnail> audioThumbnail;
-    juce::AudioBuffer<float> audioBufferForThumbnail;
+    struct AudioDataForAudioThumbnail
+    {
+        juce::AudioBuffer<float> audioBuffer{};
+        double sampleRate{ 0.0 };
+
+        JUCE_LEAK_DETECTOR(AudioDataForAudioThumbnail)
+    };
+    std::unique_ptr<AudioDataForAudioThumbnail> audioDataForAudioThumbnail;
 
     // Position info
     SpinLockedPositionInfo lastPositionInfo;
