@@ -112,11 +112,21 @@ void MusicView::timerCallback()
 //==============================================================================
 float MusicView::timeToX(const double pointTime, const double totalTime) const
 {
+    if (totalTime == 0.0)
+    {
+        return 0.0;
+    }
+
     return (float)getWidth() * (float)pointTime / (float)totalTime;
 }
 
 double MusicView::xToTime(const double x, const double totalTime) const
 {
+    if (totalTime == 0.0)
+    {
+        return 0.0;
+    }
+
     return (x / (double)getWidth()) * totalTime;
 }
 

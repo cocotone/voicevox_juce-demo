@@ -19,6 +19,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 //   juce::Desktop::getInstance().getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(typeFaceName);
 #endif
 
+    songEditor = std::make_unique<cctn::song::SongEditor>();
+    addAndMakeVisible(songEditor.get());
+
+    songEditor->registerPositionInfoProvider(this);
+
     jsonTreeView = std::make_unique<juce::TreeView>();
     jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
     jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, juce::Colours::whitesmoke);
@@ -148,6 +153,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    songEditor->unregisterPositionInfoProvider(this);
+    songEditor.reset();
+
     stopTimer();
 
     processorRef.getEditorState().removeListener(this);
@@ -193,8 +201,11 @@ void AudioPluginAudioProcessorEditor::resized()
             }
 #endif
         }
+#if 1
+        songEditor->setBounds(property_pane.reduced(8));
+#else
         textEditor->setBounds(property_pane.reduced(8));
-
+#endif
         labelTimecodeDisplay->setBounds(bottom_pane.removeFromBottom(60).reduced(8));
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));
@@ -249,9 +260,16 @@ void AudioPluginAudioProcessorEditor::valueTreePropertyChanged(juce::ValueTree& 
     }
 }
 
+//==============================================================================
 void AudioPluginAudioProcessorEditor::timerCallback()
 {
     updateTimecodeDisplay(processorRef.getLastPositionInfo());
+}
+
+//==============================================================================
+std::optional<juce::AudioPlayHead::PositionInfo> AudioPluginAudioProcessorEditor::getPositionInfo()
+{
+    return processorRef.getLastPositionInfo();
 }
 
 //==============================================================================
