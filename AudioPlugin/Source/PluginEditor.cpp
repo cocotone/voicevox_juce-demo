@@ -146,7 +146,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Initial update
     updateView(true);
 
-    setSize (640, 800);
+    setSize (800, 960);
 
     startTimerHz(30);
 }
