@@ -137,6 +137,25 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     labelTimecodeDisplay->setFont(juce::FontOptions(juce::Font::getDefaultMonospacedFontName(), 15.0f, juce::Font::plain));
     addAndMakeVisible(labelTimecodeDisplay.get());
 
+    buttonTransportMenu = std::make_unique<juce::TextButton>();
+    buttonTransportMenu->setButtonText("Transport Menu");
+    buttonTransportMenu->onClick = 
+        [safe_this = juce::Component::SafePointer(this)] {
+        if (safe_this.getComponent() == nullptr)
+        {
+            return;
+        }
+
+        const auto options = juce::PopupMenu::Options()
+            .withDeletionCheck(*safe_this.getComponent())
+            .withTargetComponent(safe_this->buttonTransportMenu.get())
+            ;
+
+        safe_this->transportMenu = std::move(safe_this->processorRef.getTransportEmulator().createMenu());
+        safe_this->transportMenu->showMenuAsync(options);
+        };
+    addAndMakeVisible(buttonTransportMenu.get());
+
     progressPanel = std::make_unique<ProgressPanel>();
     addChildComponent(progressPanel.get());
 
@@ -212,7 +231,12 @@ void AudioPluginAudioProcessorEditor::resized()
 #else
         textEditor->setBounds(property_pane.reduced(8));
 #endif
-        labelTimecodeDisplay->setBounds(bottom_pane.removeFromBottom(60).reduced(8));
+        // Transport 
+        {
+            auto rect_transport = bottom_pane.removeFromBottom(60);
+            buttonTransportMenu->setBounds(rect_transport.removeFromLeft(120).reduced(8));
+            labelTimecodeDisplay->setBounds(rect_transport.reduced(8));
+        }
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));
 

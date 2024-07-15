@@ -79,9 +79,10 @@ public:
 
     //==============================================================================
     std::shared_ptr<cctn::song::SongEditorDocument> getSongEditorDocument() const { return songEditorDocument; };
+    cctn::song::TransportEmulator& getTransportEmulator() const { return *songTransportEmulator.get(); }
 
     //==============================================================================
-    const juce::AudioPlayHead::PositionInfo getLastPositionInfo() const { return lastPositionInfo.get(); }
+    const juce::AudioPlayHead::PositionInfo getLastPositionInfo() const { return spinLockedLastPositionInfo.get(); }
     double getHostSyncAudioSourceLengthInSeconds() const;
 
 private:
@@ -93,7 +94,7 @@ private:
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId) override;
 
     //==============================================================================
-    void updateCurrentTimeInfoFromHost();
+    void updateCurrentTimeInfoFromHost(const juce::AudioPlayHead::PositionInfo& newPositionInfo);
 
     //==============================================================================
     // Audio
@@ -119,7 +120,7 @@ private:
     std::unique_ptr<AudioDataForAudioThumbnail> audioDataForAudioThumbnail;
 
     // Position info
-    SpinLockedPositionInfo lastPositionInfo;
+    SpinLockedPositionInfo spinLockedLastPositionInfo;
     juce::AudioPlayHead::PositionInfo playTriggeredPositionInfo;
 
     // Voicevox Engine
@@ -127,6 +128,7 @@ private:
 
     // SongEditor for Voicevox
     std::shared_ptr<cctn::song::SongEditorDocument> songEditorDocument;
+    std::unique_ptr<cctn::song::TransportEmulator> songTransportEmulator;
 
     // State
     juce::ValueTree applicationState;

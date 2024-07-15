@@ -65,6 +65,8 @@ private:
 
     // SongEditor
     std::unique_ptr<cctn::song::SongEditor> songEditor;
+    std::unique_ptr<juce::TextButton> buttonTransportMenu;
+    std::unique_ptr<juce::PopupMenu> transportMenu;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
