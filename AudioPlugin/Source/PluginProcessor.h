@@ -62,6 +62,7 @@ public:
     void requestSynthesis(juce::int64 speakerId, const juce::String& text);
     void requestTextToSpeech(juce::int64 speakerId, const juce::String& text);
     void requestHumming(juce::int64 speakerId, const juce::String& text);
+    void requestSongWithSongEditorDocument(juce::int64 speakerId);
     juce::String getMetaJsonStringify();
 
     //==============================================================================
@@ -75,6 +76,9 @@ public:
     const juce::StringArray& getVoicevoxTalkSpeakerList() const { return voicevoxTalkSpeakerIdentifierList; };
     const juce::StringArray& getVoicevoxHummingSpeakerList() const { return voicevoxHummingSpeakerIdentifierList; };
     const std::map<juce::String, juce::uint32>& getVoicevoxSpeakerMap() const { return voicevoxMapSpeakerIdentifierToSpeakerId; };
+
+    //==============================================================================
+    std::shared_ptr<cctn::song::SongEditorDocument> getSongEditorDocument() const { return songEditorDocument; };
 
     //==============================================================================
     const juce::AudioPlayHead::PositionInfo getLastPositionInfo() const { return lastPositionInfo.get(); }
@@ -120,6 +124,9 @@ private:
 
     // Voicevox Engine
     std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
+
+    // SongEditor for Voicevox
+    std::shared_ptr<cctn::song::SongEditorDocument> songEditorDocument;
 
     // State
     juce::ValueTree applicationState;

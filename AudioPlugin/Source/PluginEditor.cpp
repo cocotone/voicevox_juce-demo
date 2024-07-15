@@ -23,6 +23,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(songEditor.get());
 
     songEditor->registerPositionInfoProvider(this);
+    songEditor->registerSongEditorDocument(processorRef.getSongEditorDocument());
 
     jsonTreeView = std::make_unique<juce::TreeView>();
     jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
@@ -117,8 +118,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         }
 
         const auto speaker_id = (int)safe_this->valueSpeakerId.getValue();
+#if 0
         const auto text = safe_this->textEditor->getText();
         safe_this->processorRef.requestHumming(speaker_id, text);
+#else
+        safe_this->processorRef.requestSongWithSongEditorDocument(speaker_id);
+#endif
         };
     addAndMakeVisible(buttonInvokeHumming.get());
 
@@ -154,6 +159,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
     songEditor->unregisterPositionInfoProvider(this);
+    songEditor->unregisterSongEditorDocument(processorRef.getSongEditorDocument());
     songEditor.reset();
 
     stopTimer();

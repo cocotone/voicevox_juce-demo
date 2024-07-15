@@ -49,6 +49,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
    
     voicevoxEngine = std::make_unique<cctn::VoicevoxEngine>();
 
+    songEditorDocument = std::make_shared<cctn::song::SongEditorDocument>();
+
     audioTransportSource->addChangeListener(this);
 }
 
@@ -59,6 +61,8 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
     audioTransportSource->removeChangeListener(this);
 
     applicationState.removeListener(this);
+
+    songEditorDocument.reset();
 }
 
 //==============================================================================
@@ -504,6 +508,12 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
         });
 
     editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(true), nullptr);
+}
+
+void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 speakerId)
+{
+    juce::String score_json = songEditorDocument->createScoreJsonString();
+    requestHumming(speakerId, score_json);
 }
 
 juce::String AudioPluginAudioProcessor::getMetaJsonStringify()
