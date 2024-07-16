@@ -7,3 +7,6 @@
 [submodule "voicevox_juce_extra"]
 	path = voicevox_juce_extra
 	url = https://github.com/cocotone/voicevox_juce_extra.git
+[submodule "cocotone_song_editor_basics"]
+	path = cocotone_song_editor_basics
+	url = https://github.com/cocotone/cocotone_song_editor_basics.git
