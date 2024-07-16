@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <voicevox_juce_extra/voicevox_juce_extra.h>
+#include <cocotone_song_editor_basics/cocotone_song_editor_basics.h>
 #include "SpinLockedPositionInfo.h"
 
 //==============================================================================

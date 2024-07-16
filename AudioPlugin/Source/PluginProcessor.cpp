@@ -517,6 +517,8 @@ void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 sp
 {
     juce::String score_json = songEditorDocument->createScoreJsonString();
     requestHumming(speakerId, score_json);
+
+    juce::Logger::outputDebugString(score_json);
 }
 
 juce::String AudioPluginAudioProcessor::getMetaJsonStringify()
