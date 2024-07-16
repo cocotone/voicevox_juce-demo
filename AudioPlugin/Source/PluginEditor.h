@@ -1,5 +1,7 @@
 #pragma once
 
+#include <voicevox_juce_extra/voicevox_juce_extra.h>
+
 #include "PluginProcessor.h"
 
 #include "View/MusicView.h"
@@ -11,6 +13,7 @@ class AudioPluginAudioProcessorEditor final
     : public juce::AudioProcessorEditor
     , private juce::ValueTree::Listener
     , private juce::Timer
+    , private cctn::song::IPositionInfoProvider
 {
 public:
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
@@ -26,6 +29,9 @@ private:
 
     //==============================================================================
     virtual void timerCallback() override;
+
+    //==============================================================================
+    virtual std::optional<juce::AudioPlayHead::PositionInfo> getPositionInfo() override;
 
     //==============================================================================
     void updateView(bool isInitial);
@@ -56,6 +62,11 @@ private:
     std::unique_ptr<ProgressPanel> progressPanel;
     juce::CachedValue<bool> valueIsVoicevoxEngineTaskRunning;
     juce::CachedValue<bool> valueIsVoicevoxEngineHasSpeakerListUpdated;
+
+    // SongEditor
+    std::unique_ptr<cctn::song::SongEditor> songEditor;
+    std::unique_ptr<juce::TextButton> buttonTransportMenu;
+    std::unique_ptr<juce::PopupMenu> transportMenu;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };

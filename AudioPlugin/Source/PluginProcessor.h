@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <voicevox_juce_extra/voicevox_juce_extra.h>
+#include <cocotone_song_editor_basics/cocotone_song_editor_basics.h>
 #include "SpinLockedPositionInfo.h"
 
 //==============================================================================
@@ -62,6 +63,7 @@ public:
     void requestSynthesis(juce::int64 speakerId, const juce::String& text);
     void requestTextToSpeech(juce::int64 speakerId, const juce::String& text);
     void requestHumming(juce::int64 speakerId, const juce::String& text);
+    void requestSongWithSongEditorDocument(juce::int64 speakerId);
     juce::String getMetaJsonStringify();
 
     //==============================================================================
@@ -77,7 +79,11 @@ public:
     const std::map<juce::String, juce::uint32>& getVoicevoxSpeakerMap() const { return voicevoxMapSpeakerIdentifierToSpeakerId; };
 
     //==============================================================================
-    const juce::AudioPlayHead::PositionInfo getLastPositionInfo() const { return lastPositionInfo.get(); }
+    std::shared_ptr<cctn::song::SongEditorDocument> getSongEditorDocument() const { return songEditorDocument; };
+    cctn::song::TransportEmulator& getTransportEmulator() const { return *songTransportEmulator.get(); }
+
+    //==============================================================================
+    const juce::AudioPlayHead::PositionInfo getLastPositionInfo() const { return spinLockedLastPositionInfo.get(); }
     double getHostSyncAudioSourceLengthInSeconds() const;
 
 private:
@@ -89,7 +95,7 @@ private:
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& propertyId) override;
 
     //==============================================================================
-    void updateCurrentTimeInfoFromHost();
+    void updateCurrentTimeInfoFromHost(const juce::AudioPlayHead::PositionInfo& newPositionInfo);
 
     //==============================================================================
     // Audio
@@ -115,11 +121,15 @@ private:
     std::unique_ptr<AudioDataForAudioThumbnail> audioDataForAudioThumbnail;
 
     // Position info
-    SpinLockedPositionInfo lastPositionInfo;
+    SpinLockedPositionInfo spinLockedLastPositionInfo;
     juce::AudioPlayHead::PositionInfo playTriggeredPositionInfo;
 
     // Voicevox Engine
     std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
+
+    // SongEditor for Voicevox
+    std::shared_ptr<cctn::song::SongEditorDocument> songEditorDocument;
+    std::unique_ptr<cctn::song::TransportEmulator> songTransportEmulator;
 
     // State
     juce::ValueTree applicationState;

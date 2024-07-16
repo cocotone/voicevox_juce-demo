@@ -67,6 +67,7 @@ target_link_libraries(${PLUGIN_NAME}
         voicevox::voicevox_core
         voicevox::voicevox_juce
         cocotone::voicevox_juce_extra
+        cocotone::cocotone_song_editor_basics
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

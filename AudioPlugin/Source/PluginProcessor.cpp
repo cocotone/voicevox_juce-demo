@@ -49,6 +49,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
    
     voicevoxEngine = std::make_unique<cctn::VoicevoxEngine>();
 
+    songEditorDocument = std::make_shared<cctn::song::SongEditorDocument>();
+    songTransportEmulator = std::make_unique<cctn::song::TransportEmulator>();
+
     audioTransportSource->addChangeListener(this);
 }
 
@@ -59,6 +62,8 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
     audioTransportSource->removeChangeListener(this);
 
     applicationState.removeListener(this);
+
+    songEditorDocument.reset();
 }
 
 //==============================================================================
@@ -186,7 +191,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& audioBuf
 {
     juce::ignoreUnused (midiMessages);
 
-    const auto current_host_poisition_info =
+    auto current_host_poisition_info =
         [&] 
         {
             if (const auto* play_head = getPlayHead())
@@ -200,6 +205,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& audioBuf
             // If the host fails to provide the current time, we'll just use default values
             return juce::AudioPlayHead::PositionInfo{};
         }();
+
+    songTransportEmulator->processPositionInfo(current_host_poisition_info);
 
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -233,7 +240,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& audioBuf
     }
 
     // Now ask the host for the current time so we can store it to be displayed later...
-    updateCurrentTimeInfoFromHost();
+    updateCurrentTimeInfoFromHost(current_host_poisition_info);
 }
 
 //==============================================================================
@@ -506,6 +513,14 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
     editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(true), nullptr);
 }
 
+void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 speakerId)
+{
+    juce::String score_json = songEditorDocument->createScoreJsonString();
+    requestHumming(speakerId, score_json);
+
+    juce::Logger::outputDebugString(score_json);
+}
+
 juce::String AudioPluginAudioProcessor::getMetaJsonStringify()
 {
     return juce::JSON::toString(voicevoxEngine->getMetaJson());
@@ -571,23 +586,9 @@ void AudioPluginAudioProcessor::valueTreePropertyChanged(juce::ValueTree& treeWh
 }
 
 //==============================================================================
-void AudioPluginAudioProcessor::updateCurrentTimeInfoFromHost()
+void AudioPluginAudioProcessor::updateCurrentTimeInfoFromHost(const juce::AudioPlayHead::PositionInfo& newPositionInfo)
 {
-    const auto newInfo = [&]
-        {
-            if (const auto* play_head = getPlayHead())
-            {
-                if (const auto result = play_head->getPosition())
-                {
-                    return result.orFallback(juce::AudioPlayHead::PositionInfo{});
-                }
-            }
-
-            // If the host fails to provide the current time, we'll just use default values
-            return juce::AudioPlayHead::PositionInfo{};
-        }();
-
-    lastPositionInfo.set(newInfo);
+    spinLockedLastPositionInfo.set(newPositionInfo);
 }
 
 //==============================================================================

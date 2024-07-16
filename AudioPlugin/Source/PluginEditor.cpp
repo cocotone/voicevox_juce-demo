@@ -19,6 +19,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 //   juce::Desktop::getInstance().getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(typeFaceName);
 #endif
 
+    songEditor = std::make_unique<cctn::song::SongEditor>();
+    addAndMakeVisible(songEditor.get());
+
+    songEditor->registerPositionInfoProvider(this);
+    songEditor->registerSongEditorDocument(processorRef.getSongEditorDocument());
+
     jsonTreeView = std::make_unique<juce::TreeView>();
     jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
     jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, juce::Colours::whitesmoke);
@@ -112,8 +118,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         }
 
         const auto speaker_id = (int)safe_this->valueSpeakerId.getValue();
+#if 0
         const auto text = safe_this->textEditor->getText();
         safe_this->processorRef.requestHumming(speaker_id, text);
+#else
+        safe_this->processorRef.requestSongWithSongEditorDocument(speaker_id);
+#endif
         };
     addAndMakeVisible(buttonInvokeHumming.get());
 
@@ -126,6 +136,25 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     labelTimecodeDisplay = std::make_unique<juce::Label>();
     labelTimecodeDisplay->setFont(juce::FontOptions(juce::Font::getDefaultMonospacedFontName(), 15.0f, juce::Font::plain));
     addAndMakeVisible(labelTimecodeDisplay.get());
+
+    buttonTransportMenu = std::make_unique<juce::TextButton>();
+    buttonTransportMenu->setButtonText("Transport Menu");
+    buttonTransportMenu->onClick = 
+        [safe_this = juce::Component::SafePointer(this)] {
+        if (safe_this.getComponent() == nullptr)
+        {
+            return;
+        }
+
+        const auto options = juce::PopupMenu::Options()
+            .withDeletionCheck(*safe_this.getComponent())
+            .withTargetComponent(safe_this->buttonTransportMenu.get())
+            ;
+
+        safe_this->transportMenu = std::move(safe_this->processorRef.getTransportEmulator().createMenu());
+        safe_this->transportMenu->showMenuAsync(options);
+        };
+    addAndMakeVisible(buttonTransportMenu.get());
 
     progressPanel = std::make_unique<ProgressPanel>();
     addChildComponent(progressPanel.get());
@@ -141,13 +170,17 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Initial update
     updateView(true);
 
-    setSize (640, 800);
+    setSize (800, 960);
 
     startTimerHz(30);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    songEditor->unregisterPositionInfoProvider(this);
+    songEditor->unregisterSongEditorDocument(processorRef.getSongEditorDocument());
+    songEditor.reset();
+
     stopTimer();
 
     processorRef.getEditorState().removeListener(this);
@@ -193,9 +226,17 @@ void AudioPluginAudioProcessorEditor::resized()
             }
 #endif
         }
+#if 1
+        songEditor->setBounds(property_pane.reduced(8));
+#else
         textEditor->setBounds(property_pane.reduced(8));
-
-        labelTimecodeDisplay->setBounds(bottom_pane.removeFromBottom(60).reduced(8));
+#endif
+        // Transport 
+        {
+            auto rect_transport = bottom_pane.removeFromBottom(60);
+            buttonTransportMenu->setBounds(rect_transport.removeFromLeft(120).reduced(8));
+            labelTimecodeDisplay->setBounds(rect_transport.reduced(8));
+        }
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));
 
@@ -249,9 +290,16 @@ void AudioPluginAudioProcessorEditor::valueTreePropertyChanged(juce::ValueTree& 
     }
 }
 
+//==============================================================================
 void AudioPluginAudioProcessorEditor::timerCallback()
 {
     updateTimecodeDisplay(processorRef.getLastPositionInfo());
+}
+
+//==============================================================================
+std::optional<juce::AudioPlayHead::PositionInfo> AudioPluginAudioProcessorEditor::getPositionInfo()
+{
+    return processorRef.getLastPositionInfo();
 }
 
 //==============================================================================
