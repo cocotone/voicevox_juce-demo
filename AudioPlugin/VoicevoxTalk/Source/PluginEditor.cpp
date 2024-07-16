@@ -170,7 +170,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Initial update
     updateView(true);
 
-    setSize (800, 960);
+    setSize (400, 800);
 
     startTimerHz(30);
 }
@@ -206,7 +206,7 @@ void AudioPluginAudioProcessorEditor::resized()
 
         auto action_select_pane = property_pane.removeFromBottom(160);
         {
-#if 1
+#if 0
             auto action_talk_pane = action_select_pane.removeFromLeft(action_select_pane.getWidth() * 0.5f);
             {
                 buttonInvokeTalk->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
@@ -226,17 +226,20 @@ void AudioPluginAudioProcessorEditor::resized()
             }
 #endif
         }
-#if 1
+#if 0
         songEditor->setBounds(property_pane.reduced(8));
 #else
         textEditor->setBounds(property_pane.reduced(8));
 #endif
+
+#if 0
         // Transport 
         {
             auto rect_transport = bottom_pane.removeFromBottom(60);
             buttonTransportMenu->setBounds(rect_transport.removeFromLeft(120).reduced(8));
             labelTimecodeDisplay->setBounds(rect_transport.reduced(8));
         }
+#endif
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));
 
