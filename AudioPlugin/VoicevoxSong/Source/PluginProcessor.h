@@ -63,7 +63,7 @@ public:
     void requestSynthesis(juce::int64 speakerId, const juce::String& text);
     void requestTextToSpeech(juce::int64 speakerId, const juce::String& text);
     void requestHumming(juce::int64 speakerId, const juce::String& text);
-    void requestSongWithSongEditorDocument(juce::int64 speakerId);
+    void requestSongWithSongEditorDocument(juce::int64 speakerId_unused);
     juce::String getMetaJsonStringify();
 
     //==============================================================================

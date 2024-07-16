@@ -476,12 +476,11 @@ void AudioPluginAudioProcessor::requestTextToSpeech(juce::int64 speakerId, const
     editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(true), nullptr);
 }
 
-void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce::String& text)
+void AudioPluginAudioProcessor::requestHumming(juce::int64 /*speakerId*/, const juce::String& text)
 {
     cctn::VoicevoxEngineRequest request;
     request.requestId = juce::Uuid();
     request.speakerId = voicevoxMapSpeakerIdentifierToSpeakerId[editorState.getProperty("VoicevoxEngine_SelectedHummingSpeakerIdentifier").toString()];
-    //request.audioQuery = text;
     request.scoreJson = text;
     request.sampleRate = 24000;
     request.processType = cctn::VoicevoxEngineProcessType::kHumming;
@@ -513,10 +512,10 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 speakerId, const juce
     editorState.setProperty("VoicevoxEngine_IsTaskRunning", juce::var(true), nullptr);
 }
 
-void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 speakerId)
+void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 speakerId_unused)
 {
-    juce::String score_json = songEditorDocument->createScoreJsonString();
-    requestHumming(speakerId, score_json);
+    const juce::String score_json = songEditorDocument->createScoreJsonString();
+    requestHumming(speakerId_unused, score_json);
 
     juce::Logger::outputDebugString(score_json);
 }

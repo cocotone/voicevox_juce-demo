@@ -25,75 +25,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     songEditor->registerPositionInfoProvider(this);
     songEditor->registerSongEditorDocument(processorRef.getSongEditorDocument());
 
-    jsonTreeView = std::make_unique<juce::TreeView>();
-    jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-    jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, juce::Colours::whitesmoke);
-    jsonTreeView->setDefaultOpenness(true);
-    jsonTreeView->setInterceptsMouseClicks(true, true);
-    addAndMakeVisible(jsonTreeView.get());
-
-    buttonUpdateVoicevoxMetas = std::make_unique<juce::TextButton>();
-    buttonUpdateVoicevoxMetas->setButtonText("Update MetasJson");
-    buttonUpdateVoicevoxMetas->onClick = [safe_this = juce::Component::SafePointer(this)] {
-        if (safe_this.getComponent() == nullptr)
-        {
-            return;
-        }
-
-        juce::String text_to_parse = safe_this->processorRef.getMetaJsonStringify();
-        safe_this->jsonTreeView->setRootItem(nullptr);
-        safe_this->jsonTreeViewItemRoot.reset(nullptr);
-
-        juce::String error_message;
-        safe_this->jsonTreeViewItemRoot.reset(rebuildJson(text_to_parse, error_message));
-
-        if (error_message.isNotEmpty())
-        {
-        }
-        else
-        {
-            safe_this->jsonTreeView->setRootItem(safe_this->jsonTreeViewItemRoot.get());
-            safe_this->jsonTreeView->repaint();
-        }
-        };
-    addAndMakeVisible(buttonUpdateVoicevoxMetas.get());
-
-    speakerIdEditor = std::make_unique<juce::TextPropertyComponent>(valueSpeakerId, "Speaker ID", 4, false, true);
-    addAndMakeVisible(speakerIdEditor.get());
-
-    textEditor = std::make_unique<juce::TextEditor>();
-    textEditor->setMultiLine(true);
-    textEditor->setFont(textEditor->getFont().withPointHeight(15));
-    addAndMakeVisible(textEditor.get());
-    comboboxTalkSpeakerChoice = std::make_unique<juce::ComboBox>();
-    comboboxTalkSpeakerChoice->onChange =
-        [safe_this = juce::Component::SafePointer(this)] {
-        if (safe_this.getComponent() == nullptr)
-        {
-            return;
-        }
-
-        const auto selected_speaker_identifier = safe_this->comboboxTalkSpeakerChoice->getItemText(safe_this->comboboxTalkSpeakerChoice->getSelectedItemIndex());
-        safe_this->processorRef.getEditorState().setProperty("VoicevoxEngine_SelectedTalkSpeakerIdentifier", selected_speaker_identifier, nullptr);
-        };
-    addAndMakeVisible(comboboxTalkSpeakerChoice.get());
-
-    buttonInvokeTalk = std::make_unique<juce::TextButton>();
-    buttonInvokeTalk->setButtonText(
-        juce::CharPointer_UTF8 ("\xe3\x81\x97\xe3\x82\x83\xe3\x81\xb9\xe3\x82\x8b\xe3\x82\x88")
-    );
-    buttonInvokeTalk->onClick = [safe_this = juce::Component::SafePointer(this)] {
-        if(safe_this.getComponent() == nullptr)
-        {
-            return;
-        }
-
-        const auto speaker_id = (int)safe_this->valueSpeakerId.getValue();
-        const auto text = safe_this->textEditor->getText();
-        safe_this->processorRef.requestTextToSpeech(speaker_id, text);
-        };
-    addAndMakeVisible(buttonInvokeTalk.get());
-
     comboboxHummingSpeakerChoice = std::make_unique<juce::ComboBox>();
     comboboxHummingSpeakerChoice->onChange =
         [safe_this = juce::Component::SafePointer(this)] {
@@ -117,13 +48,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return;
         }
 
-        const auto speaker_id = (int)safe_this->valueSpeakerId.getValue();
-#if 0
-        const auto text = safe_this->textEditor->getText();
-        safe_this->processorRef.requestHumming(speaker_id, text);
-#else
-        safe_this->processorRef.requestSongWithSongEditorDocument(speaker_id);
-#endif
+        safe_this->processorRef.requestSongWithSongEditorDocument(0);
         };
     addAndMakeVisible(buttonInvokeHumming.get());
 
@@ -170,7 +95,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Initial update
     updateView(true);
 
-    setSize (800, 960);
+    setSize (1280, 720);
 
     startTimerHz(30);
 }
@@ -184,9 +109,6 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
     stopTimer();
 
     processorRef.getEditorState().removeListener(this);
-
-    jsonTreeView->setRootItem(nullptr);
-    jsonTreeViewItemRoot.reset(nullptr);
 }
 
 //==============================================================================
@@ -200,43 +122,28 @@ void AudioPluginAudioProcessorEditor::resized()
     auto rect_area = getLocalBounds();
 
     {
-        auto bottom_pane = rect_area.removeFromBottom(260);
+        auto bottom_pane = rect_area.removeFromBottom(240);
         auto property_pane = rect_area;
         auto progress_area = property_pane;
 
-        auto action_select_pane = property_pane.removeFromBottom(160);
+        auto action_select_pane = property_pane.removeFromBottom(60);
         {
-#if 1
-            auto action_talk_pane = action_select_pane.removeFromLeft(action_select_pane.getWidth() * 0.5f);
-            {
-                buttonInvokeTalk->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
-                comboboxTalkSpeakerChoice->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
-            }
-
             auto action_humming_pane = action_select_pane;
             {
-                buttonInvokeHumming->setBounds(action_humming_pane.removeFromBottom(80).reduced(8));
-                comboboxHummingSpeakerChoice->setBounds(action_humming_pane.removeFromBottom(80).reduced(8));
+                const auto comp_width = action_humming_pane.getWidth() * 0.5f;
+                comboboxHummingSpeakerChoice->setBounds(action_humming_pane.removeFromLeft(comp_width).reduced(8));
+                buttonInvokeHumming->setBounds(action_humming_pane.removeFromRight(comp_width).reduced(8));
             }
-#else
-            auto action_talk_pane = action_select_pane;
-            {
-                buttonInvokeTalk->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
-                comboboxTalkSpeakerChoice->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
-            }
-#endif
         }
-#if 1
         songEditor->setBounds(property_pane.reduced(8));
-#else
-        textEditor->setBounds(property_pane.reduced(8));
-#endif
+
         // Transport 
         {
             auto rect_transport = bottom_pane.removeFromBottom(60);
             buttonTransportMenu->setBounds(rect_transport.removeFromLeft(120).reduced(8));
             labelTimecodeDisplay->setBounds(rect_transport.reduced(8));
         }
+
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));
 
@@ -262,14 +169,6 @@ void AudioPluginAudioProcessorEditor::valueTreePropertyChanged(juce::ValueTree& 
         {
             valueIsVoicevoxEngineHasSpeakerListUpdated.forceUpdateOfCachedValue();
             valueIsVoicevoxEngineHasSpeakerListUpdated.setValue(false, nullptr);
-
-            {
-                auto speaker_list = processorRef.getVoicevoxTalkSpeakerList();
-                const auto last_combo_text = processorRef.getEditorState().getProperty("VoicevoxEngine_SelectedTalkSpeakerIdentifier").toString();
-                comboboxTalkSpeakerChoice->clear(juce::dontSendNotification);
-                comboboxTalkSpeakerChoice->addItemList(speaker_list, 1);
-                comboboxTalkSpeakerChoice->setText(last_combo_text);
-            }
 
             {
                 auto speaker_list = processorRef.getVoicevoxHummingSpeakerList();
@@ -309,14 +208,6 @@ void AudioPluginAudioProcessorEditor::updateView(bool isInitial)
 
     if (isInitial)
     {
-        {
-            auto speaker_list = processorRef.getVoicevoxTalkSpeakerList();
-            const auto last_combo_text = processorRef.getEditorState().getProperty("VoicevoxEngine_SelectedTalkSpeakerIdentifier").toString();
-            comboboxTalkSpeakerChoice->clear(juce::dontSendNotification);
-            comboboxTalkSpeakerChoice->addItemList(speaker_list, 1);
-            comboboxTalkSpeakerChoice->setText(last_combo_text);
-        }
-
         {
             auto speaker_list = processorRef.getVoicevoxHummingSpeakerList();
             const auto last_combo_text = processorRef.getEditorState().getProperty("VoicevoxEngine_SelectedHummingSpeakerIdentifier").toString();

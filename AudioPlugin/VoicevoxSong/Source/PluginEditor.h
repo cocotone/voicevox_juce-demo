@@ -40,20 +40,13 @@ private:
     //==============================================================================
     AudioPluginAudioProcessor& processorRef;
 
-    // Deprecated
-    std::unique_ptr<juce::TreeView> jsonTreeView;
-    std::unique_ptr<juce::TreeViewItem> jsonTreeViewItemRoot;
-    std::unique_ptr<juce::TextButton> buttonUpdateVoicevoxMetas;
+    // SongEditor
+    std::unique_ptr<cctn::song::SongEditor> songEditor;
+    std::unique_ptr<juce::TextButton> buttonTransportMenu;
+    std::unique_ptr<juce::PopupMenu> transportMenu;
 
-    std::unique_ptr<juce::TextPropertyComponent> speakerIdEditor;
-    juce::Value valueSpeakerId;
-
-    std::unique_ptr<juce::TextEditor> textEditor;
-    std::unique_ptr<juce::TextButton> buttonInvokeTalk;
-    std::unique_ptr<juce::TextButton> buttonInvokeHumming;
-
-    std::unique_ptr<juce::ComboBox> comboboxTalkSpeakerChoice;
     std::unique_ptr<juce::ComboBox> comboboxHummingSpeakerChoice;
+    std::unique_ptr<juce::TextButton> buttonInvokeHumming;
 
     std::unique_ptr<MusicView> musicView;
     std::unique_ptr<PlayerController> playerController;
@@ -63,10 +56,6 @@ private:
     juce::CachedValue<bool> valueIsVoicevoxEngineTaskRunning;
     juce::CachedValue<bool> valueIsVoicevoxEngineHasSpeakerListUpdated;
 
-    // SongEditor
-    std::unique_ptr<cctn::song::SongEditor> songEditor;
-    std::unique_ptr<juce::TextButton> buttonTransportMenu;
-    std::unique_ptr<juce::PopupMenu> transportMenu;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
