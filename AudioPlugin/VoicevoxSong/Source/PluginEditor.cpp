@@ -23,7 +23,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(songEditor.get());
 
     songEditor->registerPositionInfoProvider(this);
-    songEditor->registerSongEditorDocument(processorRef.getSongEditorDocument());
+    songEditor->registerSongDocumentEditor(processorRef.getSongDocumentEditor());
 
     comboboxHummingSpeakerChoice = std::make_unique<juce::ComboBox>();
     comboboxHummingSpeakerChoice->onChange =
@@ -103,7 +103,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
     songEditor->unregisterPositionInfoProvider(this);
-    songEditor->unregisterSongEditorDocument(processorRef.getSongEditorDocument());
+    songEditor->unregisterSongDocumentEditor(processorRef.getSongDocumentEditor());
     songEditor.reset();
 
     stopTimer();

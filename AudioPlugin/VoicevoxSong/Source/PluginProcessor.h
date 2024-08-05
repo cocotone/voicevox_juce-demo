@@ -79,7 +79,7 @@ public:
     const std::map<juce::String, juce::uint32>& getVoicevoxSpeakerMap() const { return voicevoxMapSpeakerIdentifierToSpeakerId; };
 
     //==============================================================================
-    std::shared_ptr<cctn::song::SongEditorDocument> getSongEditorDocument() const { return songEditorDocument; };
+    std::shared_ptr<cctn::song::SongDocumentEditor> getSongDocumentEditor() const { return songDocumentEditor; };
     cctn::song::TransportEmulator& getTransportEmulator() const { return *songTransportEmulator.get(); }
 
     //==============================================================================
@@ -128,7 +128,7 @@ private:
     std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
 
     // SongEditor for Voicevox
-    std::shared_ptr<cctn::song::SongEditorDocument> songEditorDocument;
+    std::shared_ptr<cctn::song::SongDocumentEditor> songDocumentEditor;
     std::unique_ptr<cctn::song::TransportEmulator> songTransportEmulator;
 
     // State

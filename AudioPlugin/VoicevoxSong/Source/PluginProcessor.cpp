@@ -49,7 +49,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
    
     voicevoxEngine = std::make_unique<cctn::VoicevoxEngine>();
 
-    songEditorDocument = std::make_shared<cctn::song::SongEditorDocument>();
+    songDocumentEditor = std::make_shared<cctn::song::SongDocumentEditor>();
     songTransportEmulator = std::make_unique<cctn::song::TransportEmulator>();
 
     audioTransportSource->addChangeListener(this);
@@ -63,7 +63,7 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 
     applicationState.removeListener(this);
 
-    songEditorDocument.reset();
+    songDocumentEditor.reset();
 }
 
 //==============================================================================
@@ -514,7 +514,7 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 /*speakerId*/, const 
 
 void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 speakerId_unused)
 {
-    const juce::String score_json = songEditorDocument->createScoreJsonString();
+    const juce::String score_json = songDocumentEditor->createScoreJsonString();
     requestHumming(speakerId_unused, score_json);
 
     juce::Logger::outputDebugString(score_json);
