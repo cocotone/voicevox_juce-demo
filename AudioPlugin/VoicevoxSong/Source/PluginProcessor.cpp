@@ -1,6 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include <cocotone_song_editor_basics/SongEditor/Document/Test/TestData.h>
+
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
      : AudioProcessor (BusesProperties()
@@ -52,6 +54,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     songDocumentEditor = std::make_shared<cctn::song::SongDocumentEditor>();
     songTransportEmulator = std::make_unique<cctn::song::TransportEmulator>();
 
+    testSongDocument = std::make_shared<cctn::song::SongDocument>(cctn::song::createTestSongDocument());
+    songDocumentEditor->attachDocument(testSongDocument);
+
     audioTransportSource->addChangeListener(this);
 }
 
@@ -63,6 +68,7 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 
     applicationState.removeListener(this);
 
+    songDocumentEditor->detachDocument();
     songDocumentEditor.reset();
 }
 
@@ -514,10 +520,12 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 /*speakerId*/, const 
 
 void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 speakerId_unused)
 {
-    const juce::String score_json = songDocumentEditor->createScoreJsonString();
-    requestHumming(speakerId_unused, score_json);
-
+    cctn::song::SongDocumentTranspiler::VoicevoxTranspileTarget transpiler;
+    const juce::String score_json = transpiler.transpile(*testSongDocument.get());
+ 
     juce::Logger::outputDebugString(score_json);
+
+    requestHumming(speakerId_unused, score_json);
 }
 
 juce::String AudioPluginAudioProcessor::getMetaJsonStringify()

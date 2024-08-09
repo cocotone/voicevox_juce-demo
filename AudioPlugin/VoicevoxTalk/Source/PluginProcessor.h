@@ -63,7 +63,6 @@ public:
     void requestSynthesis(juce::int64 speakerId, const juce::String& text);
     void requestTextToSpeech(juce::int64 speakerId, const juce::String& text);
     void requestHumming(juce::int64 speakerId, const juce::String& text);
-    void requestSongWithSongEditorDocument(juce::int64 speakerId);
     juce::String getMetaJsonStringify();
 
     //==============================================================================
@@ -79,7 +78,6 @@ public:
     const std::map<juce::String, juce::uint32>& getVoicevoxSpeakerMap() const { return voicevoxMapSpeakerIdentifierToSpeakerId; };
 
     //==============================================================================
-    std::shared_ptr<cctn::song::SongEditorDocument> getSongEditorDocument() const { return songEditorDocument; };
     cctn::song::TransportEmulator& getTransportEmulator() const { return *songTransportEmulator.get(); }
 
     //==============================================================================
@@ -128,7 +126,6 @@ private:
     std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
 
     // SongEditor for Voicevox
-    std::shared_ptr<cctn::song::SongEditorDocument> songEditorDocument;
     std::unique_ptr<cctn::song::TransportEmulator> songTransportEmulator;
 
     // State

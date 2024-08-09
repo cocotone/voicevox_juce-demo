@@ -19,12 +19,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 //   juce::Desktop::getInstance().getDefaultLookAndFeel().setDefaultSansSerifTypefaceName(typeFaceName);
 #endif
 
-    songEditor = std::make_unique<cctn::song::SongEditor>();
-    addAndMakeVisible(songEditor.get());
-
-    songEditor->registerPositionInfoProvider(this);
-    songEditor->registerSongEditorDocument(processorRef.getSongEditorDocument());
-
     jsonTreeView = std::make_unique<juce::TreeView>();
     jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
     jsonTreeView->setColour(juce::TreeView::ColourIds::backgroundColourId, juce::Colours::whitesmoke);
@@ -118,12 +112,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         }
 
         const auto speaker_id = (int)safe_this->valueSpeakerId.getValue();
-#if 0
         const auto text = safe_this->textEditor->getText();
         safe_this->processorRef.requestHumming(speaker_id, text);
-#else
-        safe_this->processorRef.requestSongWithSongEditorDocument(speaker_id);
-#endif
         };
     addAndMakeVisible(buttonInvokeHumming.get());
 
@@ -177,10 +167,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
-    songEditor->unregisterPositionInfoProvider(this);
-    songEditor->unregisterSongEditorDocument(processorRef.getSongEditorDocument());
-    songEditor.reset();
-
     stopTimer();
 
     processorRef.getEditorState().removeListener(this);
@@ -206,40 +192,15 @@ void AudioPluginAudioProcessorEditor::resized()
 
         auto action_select_pane = property_pane.removeFromBottom(160);
         {
-#if 0
-            auto action_talk_pane = action_select_pane.removeFromLeft(action_select_pane.getWidth() * 0.5f);
-            {
-                buttonInvokeTalk->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
-                comboboxTalkSpeakerChoice->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
-            }
-
-            auto action_humming_pane = action_select_pane;
-            {
-                buttonInvokeHumming->setBounds(action_humming_pane.removeFromBottom(80).reduced(8));
-                comboboxHummingSpeakerChoice->setBounds(action_humming_pane.removeFromBottom(80).reduced(8));
-            }
-#else
             auto action_talk_pane = action_select_pane;
             {
                 buttonInvokeTalk->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
                 comboboxTalkSpeakerChoice->setBounds(action_talk_pane.removeFromBottom(80).reduced(8));
             }
-#endif
         }
-#if 0
-        songEditor->setBounds(property_pane.reduced(8));
-#else
-        textEditor->setBounds(property_pane.reduced(8));
-#endif
 
-#if 0
-        // Transport 
-        {
-            auto rect_transport = bottom_pane.removeFromBottom(60);
-            buttonTransportMenu->setBounds(rect_transport.removeFromLeft(120).reduced(8));
-            labelTimecodeDisplay->setBounds(rect_transport.reduced(8));
-        }
-#endif
+        textEditor->setBounds(property_pane.reduced(8));
+
         playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
         musicView->setBounds(bottom_pane.reduced(8));
 

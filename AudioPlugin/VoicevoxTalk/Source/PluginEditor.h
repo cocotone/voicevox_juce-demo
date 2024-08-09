@@ -64,7 +64,6 @@ private:
     juce::CachedValue<bool> valueIsVoicevoxEngineHasSpeakerListUpdated;
 
     // SongEditor
-    std::unique_ptr<cctn::song::SongEditor> songEditor;
     std::unique_ptr<juce::TextButton> buttonTransportMenu;
     std::unique_ptr<juce::PopupMenu> transportMenu;
 
