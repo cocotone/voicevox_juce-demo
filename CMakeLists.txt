@@ -69,5 +69,7 @@ juce_add_module(voicevox_juce_extra ALIAS_NAMESPACE cocotone)
 
 juce_add_module(cocotone_song_editor_basics ALIAS_NAMESPACE cocotone)
 
+juce_add_module(cocotone_song_editor_formats ALIAS_NAMESPACE cocotone)
+
 # Add plugin project
 add_subdirectory(AudioPlugin)

@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include <cocotone_song_editor_formats/cocotone_song_editor_formats.h>
 #include <cocotone_song_editor_basics/SongEditor/Document/Test/TestData.h>
 
 //==============================================================================
@@ -520,7 +521,7 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 /*speakerId*/, const 
 
 void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 speakerId_unused)
 {
-    cctn::song::SongDocumentTranspiler::VoicevoxTranspileTarget transpiler;
+    cctn::song::VoicevoxTranspileTarget transpiler;
     const juce::String score_json = transpiler.transpile(*testSongDocument.get());
  
     juce::Logger::outputDebugString(score_json);
