@@ -1,6 +1,9 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "View/JsonTreeItem.h"
+#include "Exchange/RPC/TaskThread.h"
+
+#include <cocotone_song_editor_formats/cocotone_song_editor_formats.h>
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -81,6 +84,19 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         };
     addAndMakeVisible(buttonTransportMenu.get());
 
+    buttonInvokeSongDocumentExchange = std::make_unique<juce::TextButton>();
+    buttonInvokeSongDocumentExchange->setButtonText("Exchange");
+    buttonInvokeSongDocumentExchange->onClick =
+        [safe_this = juce::Component::SafePointer(this)] {
+        if (safe_this.getComponent() == nullptr)
+        {
+            return;
+        }
+
+        safe_this->exchangeSongDocument();
+        };
+    addAndMakeVisible(buttonInvokeSongDocumentExchange.get());
+
     progressPanel = std::make_unique<ProgressPanel>();
     addChildComponent(progressPanel.get());
 
@@ -140,6 +156,10 @@ void AudioPluginAudioProcessorEditor::resized()
         // Transport 
         {
             auto rect_transport = bottom_pane.removeFromBottom(60);
+
+            // Exchange
+            buttonInvokeSongDocumentExchange->setBounds(rect_transport.removeFromRight(120).reduced(8));
+
             buttonTransportMenu->setBounds(rect_transport.removeFromLeft(120).reduced(8));
             labelTimecodeDisplay->setBounds(rect_transport.reduced(8));
         }
@@ -272,4 +292,33 @@ void AudioPluginAudioProcessorEditor::updateTimecodeDisplay (const juce::AudioPl
     }
 
     labelTimecodeDisplay->setText (displayText.toString(), juce::dontSendNotification);
+}
+
+//==============================================================================
+void AudioPluginAudioProcessorEditor::exchangeSongDocument()
+{
+    if (processorRef.getSongDocumentEditor()->getCurrentDocument().has_value())
+    {
+        cctn::song::UtaFormatixTranspileTarget transpiler;
+        const auto text_ufdata = transpiler.transpile(*processorRef.getSongDocumentEditor()->getCurrentDocument().value());
+        juce::Logger::outputDebugString(text_ufdata);
+
+        const auto tmp_file = juce::File::createTempFile(".ufdata");
+        if (tmp_file.hasWriteAccess())
+        {
+            const auto os_tmp_file = tmp_file.createOutputStream();
+            if(os_tmp_file.get() != nullptr && os_tmp_file->openedOk())
+            {
+                os_tmp_file->write(text_ufdata.toRawUTF8(), text_ufdata.getNumBytesAsUTF8());
+                os_tmp_file->flush();
+            }
+        }
+
+        processTaskThread = std::make_unique<cctn::song::exchange::ExchangeProcessingTask>(
+            [this](const juce::File& inputFile, const juce::File& outputFile) {
+                outputFile.startAsProcess();
+            },
+            tmp_file);
+        processTaskThread->launchThread();
+    }
 }

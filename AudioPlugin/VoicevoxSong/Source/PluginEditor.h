@@ -38,6 +38,9 @@ private:
     void updateTimecodeDisplay (const juce::AudioPlayHead::PositionInfo& positionInfo);
 
     //==============================================================================
+    void exchangeSongDocument();
+
+    //==============================================================================
     AudioPluginAudioProcessor& processorRef;
 
     // SongEditor
@@ -56,6 +59,8 @@ private:
     juce::CachedValue<bool> valueIsVoicevoxEngineTaskRunning;
     juce::CachedValue<bool> valueIsVoicevoxEngineHasSpeakerListUpdated;
 
+    std::unique_ptr<juce::TextButton> buttonInvokeSongDocumentExchange;
+    std::unique_ptr<juce::ThreadWithProgressWindow> processTaskThread;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
