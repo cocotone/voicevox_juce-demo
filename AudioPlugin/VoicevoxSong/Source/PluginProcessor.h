@@ -128,7 +128,7 @@ private:
     std::unique_ptr<cctn::VoicevoxEngine> voicevoxEngine;
 
     // SongEditor for Voicevox
-    std::shared_ptr<cctn::song::SongDocument> testSongDocument;
+    std::shared_ptr<cctn::song::SongDocument> currentSongDocument;
     std::shared_ptr<cctn::song::SongDocumentEditor> songDocumentEditor;
     std::unique_ptr<cctn::song::TransportEmulator> songTransportEmulator;
 

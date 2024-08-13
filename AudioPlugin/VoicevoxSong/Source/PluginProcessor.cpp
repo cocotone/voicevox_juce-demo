@@ -55,8 +55,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     songDocumentEditor = std::make_shared<cctn::song::SongDocumentEditor>();
     songTransportEmulator = std::make_unique<cctn::song::TransportEmulator>();
 
-    testSongDocument = std::make_shared<cctn::song::SongDocument>(cctn::song::createTestSongDocument());
-    songDocumentEditor->attachDocument(testSongDocument);
+    currentSongDocument = std::move(cctn::song::SongEditorOperation::makeDefaultSongDocument());
+    songDocumentEditor->attachDocument(currentSongDocument);
 
     audioTransportSource->addChangeListener(this);
 }
@@ -522,7 +522,7 @@ void AudioPluginAudioProcessor::requestHumming(juce::int64 /*speakerId*/, const 
 void AudioPluginAudioProcessor::requestSongWithSongEditorDocument(juce::int64 speakerId_unused)
 {
     cctn::song::VoicevoxTranspileTarget transpiler;
-    const juce::String score_json = transpiler.transpile(*testSongDocument.get());
+    const juce::String score_json = transpiler.transpile(*currentSongDocument.get());
  
     juce::Logger::outputDebugString(score_json);
 
