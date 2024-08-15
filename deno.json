@@ -1,7 +1,7 @@
 {
     "tasks": {
         "get:webview2": "deno run --allow-all ./Tools/deno/nuget-dl.ts && deno run --allow-all ./Tasks/deno/get-webview2.ts",
-        "configure:plugin": "deno run --allow-all ./Tasks/deno/configure-plugin.ts",
+        "configure:cmake": "deno run --allow-all ./Tasks/deno/configure-cmake.ts",
         "build:plugin": "deno task configure:plugin && deno run --allow-all ./Tasks/deno/build-plugin.ts",
         "install:plugin": "deno run --allow-all ./Tasks/deno/install-plugin.ts",
         "launch:standalone": "deno run --allow-all ./Tasks/deno/launch-standalone.ts"
