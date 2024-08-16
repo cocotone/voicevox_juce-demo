@@ -26,6 +26,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(songEditor.get());
 
     songEditor->registerPositionInfoProvider(this);
+    songEditor->registerAudioThumbnailProvider(this);
     songEditor->registerSongDocumentEditor(processorRef.getSongDocumentEditor());
 
     comboboxHummingSpeakerChoice = std::make_unique<juce::ComboBox>();
@@ -220,6 +221,11 @@ void AudioPluginAudioProcessorEditor::timerCallback()
 std::optional<juce::AudioPlayHead::PositionInfo> AudioPluginAudioProcessorEditor::getPositionInfo()
 {
     return processorRef.getLastPositionInfo();
+}
+
+std::optional<juce::AudioThumbnail*> AudioPluginAudioProcessorEditor::getAudioThumbnail()
+{
+    return &processorRef.getAudioThumbnail();
 }
 
 //==============================================================================

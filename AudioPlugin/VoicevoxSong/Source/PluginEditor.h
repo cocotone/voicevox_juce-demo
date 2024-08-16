@@ -14,6 +14,7 @@ class AudioPluginAudioProcessorEditor final
     , private juce::ValueTree::Listener
     , private juce::Timer
     , private cctn::song::IPositionInfoProvider
+    , private cctn::song::IAudioThumbnailProvider
 {
 public:
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
@@ -32,6 +33,9 @@ private:
 
     //==============================================================================
     virtual std::optional<juce::AudioPlayHead::PositionInfo> getPositionInfo() override;
+
+    //==============================================================================
+    virtual std::optional<juce::AudioThumbnail*> getAudioThumbnail() override;
 
     //==============================================================================
     void updateView(bool isInitial);
