@@ -23,13 +23,13 @@ console.log("Deno.build.os: " + platform.toString())
 
 if(platform.toString() === "windows")
 {
-    await $`${__root_directory}/builds/vs2022/AudioPlugin/VoicevoxTTS_artefacts/Release/Standalone/VoicevoxTTS.exe`;
+    await $`${__root_directory}/builds/vs2022/AudioPlugin/VoicevoxSong/VoicevoxSong_artefacts/Release/Standalone/VoicevoxSong.exe`;
 }
 else if(platform.toString() === "darwin")
 {
-    await $`${__root_directory}/builds/xcode/AudioPlugin/VoicevoxTTS_artefacts/Release/Standalone/VoicevoxTTS.app/Contents/MacOS/VoicevoxTTS`;
+    await $`${__root_directory}/builds/xcode/AudioPlugin/VoicevoxSong/VoicevoxSong_artefacts/Release/Standalone/VoicevoxSong.app/Contents/MacOS/VoicevoxSong`;
 }
 else if(platform.toString() === "linux")
 {
-    await $`${__root_directory}/builds/ninja-single-release/AudioPlugin/VoicevoxTTS_artefacts/Release/Standalone/VoicevoxTTS`;
+    await $`${__root_directory}/builds/ninja-single-release/AudioPlugin/VoicevoxSong/VoicevoxSong_artefacts/Release/Standalone/VoicevoxSong`;
 }
