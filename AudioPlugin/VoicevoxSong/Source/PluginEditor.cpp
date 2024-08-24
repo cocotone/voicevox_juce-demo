@@ -113,7 +113,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     updateView(true);
 
     setResizable(true, true);
-    setSize (1280, 960);
+    setSize (1120, 1120);
 
     startTimerHz(30);
 }
