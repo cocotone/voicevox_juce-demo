@@ -113,7 +113,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     updateView(true);
 
     setResizable(true, true);
-    setSize (1120, 1120);
+    setSize (880, 880);
 
     startTimerHz(30);
 }
@@ -140,11 +140,15 @@ void AudioPluginAudioProcessorEditor::resized()
     auto rect_area = getLocalBounds();
 
     {
+#if 0
         auto bottom_pane = rect_area.removeFromBottom(240);
+#else
+        auto bottom_pane = rect_area.removeFromBottom(52);
+#endif
         auto property_pane = rect_area;
         auto progress_area = property_pane;
 
-        auto action_select_pane = property_pane.removeFromBottom(60);
+        auto action_select_pane = property_pane.removeFromBottom(52);
         {
             auto action_humming_pane = action_select_pane;
             {
@@ -157,7 +161,7 @@ void AudioPluginAudioProcessorEditor::resized()
 
         // Transport 
         {
-            auto rect_transport = bottom_pane.removeFromBottom(60);
+            auto rect_transport = bottom_pane.removeFromBottom(52);
 
             // Exchange
             buttonInvokeSongDocumentExchange->setBounds(rect_transport.removeFromRight(120).reduced(8));
@@ -165,9 +169,13 @@ void AudioPluginAudioProcessorEditor::resized()
             buttonTransportMenu->setBounds(rect_transport.removeFromLeft(120).reduced(8));
             labelTimecodeDisplay->setBounds(rect_transport.reduced(8));
         }
-
-        playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
-        musicView->setBounds(bottom_pane.reduced(8));
+#if 0
+        // Internal player and music view
+        {
+            playerController->setBounds(bottom_pane.removeFromLeft(160).reduced(8));
+            musicView->setBounds(bottom_pane.reduced(8));
+        }
+#endif
 
         progressPanel->setBounds(progress_area);
     }
