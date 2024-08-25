@@ -22,7 +22,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     applicationState.setProperty("Player_CanPlay", juce::var(false), nullptr);
     applicationState.setProperty("Player_IsPlaying", juce::var(false), nullptr);
     applicationState.setProperty("Player_IsLooping", juce::var(false), nullptr);
-    applicationState.setProperty("Player_IsSyncToHostTransport", juce::var(false), nullptr);
+    applicationState.setProperty("Player_IsSyncToHostTransport", juce::var(true), nullptr);
 
     applicationState.addListener(this);
 
