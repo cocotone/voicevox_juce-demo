@@ -59,6 +59,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     songDocumentEditor->attachDocument(currentSongDocument);
 
     audioTransportSource->addChangeListener(this);
+
+    // Initial update
+    isSyncToHostTransport = (bool)applicationState.getProperty("Player_IsSyncToHostTransport");
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
